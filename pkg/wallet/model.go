@@ -7,6 +7,9 @@ type Model interface {
 	// Name return name of wallet account
 	Name() string
 
+	// Balance return balance of wallet
+	Balance() float64
+
 	// Find instance of wallet by account name
 	Find(name string) error
 

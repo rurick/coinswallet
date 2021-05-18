@@ -1,3 +1,6 @@
+// Copyright 2021 (c) Yuriy Iovkov aka Rurick.
+// yuriyiovkov@gmail.com; telegram: @yuriyiovkov
+
 package wallet
 
 import (
@@ -16,7 +19,7 @@ func Test_Validate(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			"valid mixedcase account name",
+			"valid mixed-case account name",
 			args{
 				context.Background(),
 				"QWEasdf45",
