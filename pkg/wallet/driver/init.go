@@ -10,8 +10,6 @@ import (
 	logger "github.com/sirupsen/logrus"
 )
 
-const tableName = "accounts"
-
 var (
 	// pool of database resources
 	dbPool *pgxpool.Pool
@@ -39,7 +37,7 @@ func getConfiguration() configuration {
 
 // Init - initialisation of PgSQL driver. Connect to database, checking for existing of table
 // On success Set module variables dbPool,dbContext,dbCancelFunc
-func Init() (err error) {
+func PgSQLInit() (err error) {
 	config := getConfiguration()
 	once.Do(func() {
 		// This block will run once, when Init called first time
@@ -67,10 +65,16 @@ func Init() (err error) {
 		}
 
 		// checking for existing of table
-		row := dbPool.QueryRow(dbContext, "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME='%s'", tableName)
 		var tn string
+		row := dbPool.QueryRow(dbContext, "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME='payments'")
 		if err = row.Scan(&tn); err != nil {
-			if err = createTable(); err != nil {
+			if err = pgCreatePaymentsTable(); err != nil {
+				return
+			}
+		}
+		row = dbPool.QueryRow(dbContext, "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME='accounts'")
+		if err = row.Scan(&tn); err != nil {
+			if err = pgCreateAccountTable(); err != nil {
 				return
 			}
 		}
@@ -86,9 +90,9 @@ func Init() (err error) {
 	return
 }
 
-// createTable is internal function used for initialisation of database
-func createTable() error {
-	sql := `CREATE TABLE public.wallet
+// pgCreateTable is internal function used for initialisation of database
+func pgCreateAccountTable() error {
+	sql := `CREATE TABLE public.accounts
 			(
 				id bigserial NOT NULL,
 				name character varying(32) NOT NULL,
@@ -100,7 +104,13 @@ func createTable() error {
 	if _, err := dbPool.Exec(dbContext, sql); err != nil {
 		return errors.New("[Wallet] Can't create table wallet")
 	}
-	sql = `CREATE TABLE public.payments
+
+	return nil
+}
+
+// pgCreateTable is internal function used for initialisation of database
+func pgCreatePaymentsTable() error {
+	sql := `CREATE TABLE public.payments
 			(
 				id bigserial NOT NULL,
 				from bigint NOT NULL,
@@ -117,95 +127,4 @@ func createTable() error {
 		return errors.New("[Wallet] Can't create table payments")
 	}
 	return nil
-}
-
-//
-// Driver for work with PostgreSQL database
-//
-type PgSql struct {
-	id       int64
-	name     string
-	balance  float64
-	currency string
-}
-
-func (pg *PgSql) ID() int64 {
-	return pg.id
-}
-func (pg *PgSql) Name() string {
-	return pg.name
-}
-func (pg *PgSql) Currency() string {
-	return pg.currency
-}
-func (pg *PgSql) Balance() float64 {
-	return pg.balance
-}
-
-// Find - find wallet with name and load in object
-// Important! When any fields will be added into table, then need to add one in to SELECT query
-func (pg *PgSql) Find(name string) error {
-	row := dbPool.QueryRow(dbContext, `
-		SELECT id, name, balance, currency 
-		FROM $1 
-		WHERE 
-			"name" = $2 
-		LIMIT 1`, tableName, name)
-	if err := row.Scan(
-		&pg.id, &pg.name, &pg.balance, &pg.currency); err != nil {
-		return err
-	}
-	return nil
-}
-
-// Get - get wallet by ID and load in object
-// Important! When any fields will be added into table, then need to add one in to SELECT query
-func (pg *PgSql) Get(id int64) error {
-	row := dbPool.QueryRow(dbContext, `
-		SELECT id, name, balance, currency 
-		FROM $1 
-		WHERE 
-			"id" = $2 
-		LIMIT 1`, tableName, id)
-	if err := row.Scan(
-		&pg.id, &pg.name, &pg.balance, &pg.currency); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (pg *PgSql) Save() (err error) {
-	return nil
-}
-
-func (pg *PgSql) Create() error {
-	return nil
-}
-
-// List - return list of all wallets accounts
-// Wallets listed ordering by id
-// offset and limit are using for set slice bound of list
-// Important! When any fields will be added into table, then need to add one in to SELECT query
-func List(offset, limit int64) ([]PgSql, error) {
-	rows, err := dbPool.Query(dbContext, `
-		SELECT id, name, balance, currency 
-		FROM $1 
-		ORDER BY id
-		OFFSET $2
-		LIMIT $3`, tableName, offset, limit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var res []PgSql
-	for rows.Next() {
-		pg := PgSql{}
-		if err := rows.Scan(
-			&pg.id, &pg.name, &pg.balance, &pg.currency); err != nil {
-			return nil, err
-		}
-		res = append(res, pg)
-	}
-	return res, nil
 }

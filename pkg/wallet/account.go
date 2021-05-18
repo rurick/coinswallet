@@ -20,18 +20,23 @@ type (
 
 // Account - wallet account
 type Account struct {
-	id      AccountID
-	name    AccountName
-	balance float64
-}
+	ID       AccountID
+	Name     AccountName
+	Balance  float64
+	Currency string
 
-// New - create new instance of Account
-func New(id AccountID) *Account {
-	return &Account{}
+	// pointer to implementation of model
+	m accountModel
 }
 
 // Register - Create new wallet account
-func (a *Account) Register(name string) error {
+func (a *Account) Register(name AccountName) error {
+	if a.m == nil {
+		return errors.New("Create new instance calling New() method first")
+	}
+	if err := a.m.Create(string(name)); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -45,13 +50,40 @@ func (a *Account) Validate(name AccountName) error {
 }
 
 // Find find account by name
-func (a *Account) Find(name AccountName) error {
-	return nil
+func (a *Account) Find(name AccountName) (err error) {
+	if a.m == nil {
+		return errors.New("Create new instance calling New() method first")
+	}
+	err = a.m.Find(string(name))
+	return
 }
 
-func (a *Account) Balance() (float64, error) {
-	if a == nil {
-		return 0, errors.New("Create new instance calling New() method first")
+// Get  account by id
+func (a *Account) Get(id AccountID) (err error) {
+	if a.m == nil {
+		return errors.New("Create new instance calling New() method first")
 	}
-	return 0, nil
+	err = a.m.Get(int64(id))
+	return
+}
+
+// load data from model to Account
+func (a *Account) load() (err error) {
+	if a.m == nil {
+		return errors.New("Create new instance calling New() method first")
+	}
+	err = a.Get(a.ID)
+	return
+}
+
+//
+// New - create new instance of Account
+func New() (*Account, error) {
+	m, err := accountFactory()
+	if err != nil {
+		return nil, err
+	}
+	return &Account{
+		m: m,
+	}, nil
 }
