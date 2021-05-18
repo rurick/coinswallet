@@ -1,8 +1,9 @@
 // Copyright 2021 (c) Yuriy Iovkov aka Rurick.
 // yuriyiovkov@gmail.com; telegram: @yuriyiovkov
 
-// the package allows you to keep records of running goroutines
+// the package allows you to monitor of running goroutines
 // it was useful when you need wait when all your goroutines will finished
+// look in mgr_test.go file for usage
 
 package subprocmgr
 
