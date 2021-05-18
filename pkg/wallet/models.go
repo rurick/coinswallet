@@ -3,7 +3,10 @@ package wallet
 //
 // Model implement interfaces for access to database layer
 //
-type Model interface {
+type accountModel interface {
+	// ID return id of wallet account
+	ID() string
+
 	// Name return name of wallet account
 	Name() string
 
@@ -18,4 +21,8 @@ type Model interface {
 
 	// Create new object in database
 	Create() error
+}
+
+func accountFactory() {
+
 }

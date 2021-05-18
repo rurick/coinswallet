@@ -1,7 +1,6 @@
-package payment
+package wallet
 
 import (
-	"coinswallet/pkg/wallet"
 	"time"
 )
 
@@ -13,6 +12,6 @@ type Payment struct {
 	ID     ID
 	Date   time.Time
 	Amount float64
-	From   wallet.AccountName
-	To     wallet.AccountName
+	FromID int64
+	ToID   int64
 }

@@ -15,15 +15,18 @@ import (
 type (
 	// AccountName name of user account. Available symbol are latin letters or numbers
 	AccountName string
+	AccountID   int64
 )
 
 // Account - wallet account
 type Account struct {
-	Name AccountName
+	id      AccountID
+	name    AccountName
+	balance float64
 }
 
-// New - create new instanse of Account
-func New() *Account {
+// New - create new instance of Account
+func New(id AccountID) *Account {
 	return &Account{}
 }
 
@@ -32,11 +35,23 @@ func (a *Account) Register(name string) error {
 	return nil
 }
 
-// Validate - validate account for available symbols
+// Validate - validate account for available symbols and length (4-32)
 func (a *Account) Validate(name AccountName) error {
-	re := regexp.MustCompile(`(?i)^[a-z\d]+$`)
+	re := regexp.MustCompile(`(?i)^[a-z\d]{4,32}$`)
 	if !re.Match([]byte(name)) {
 		return errors.New("wallet account name validate error")
 	}
 	return nil
+}
+
+// Find find account by name
+func (a *Account) Find(name AccountName) error {
+	return nil
+}
+
+func (a *Account) Balance() (float64, error) {
+	if a == nil {
+		return 0, errors.New("Create new instance calling New() method first")
+	}
+	return 0, nil
 }
