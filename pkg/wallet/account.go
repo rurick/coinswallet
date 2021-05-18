@@ -31,9 +31,6 @@ type Account struct {
 
 // Register - Create new wallet account
 func (a *Account) Register(name AccountName) error {
-	if a.m == nil {
-		return errors.New("Create new instance calling New() method first")
-	}
 	if err := a.m.Create(string(name)); err != nil {
 		return err
 	}
@@ -51,22 +48,32 @@ func (a *Account) Validate(name AccountName) error {
 
 // Find find account by name
 func (a *Account) Find(name AccountName) (err error) {
-	if a.m == nil {
-		return errors.New("Create new instance calling New() method first")
-	}
 	err = a.m.Find(string(name))
 	return
 }
 
 // Get  account by id
 func (a *Account) Get(id AccountID) (err error) {
-	if a.m == nil {
-		return errors.New("Create new instance calling New() method first")
-	}
 	err = a.m.Get(int64(id))
 	return
 }
 
+// Transfer creating a payment form account "a" to account with id "toID"
+func (a *Account) Transfer(toName AccountName, amount float64) (err error) {
+	var to *Account
+
+	if to, err = New(); err != nil {
+		return
+	}
+	if err = to.Find(toName); err != nil {
+		return
+	}
+
+	err = a.m.Transfer(int64(to.ID), amount)
+	return
+}
+
+//
 // load data from model to Account
 func (a *Account) load() (err error) {
 	if a.m == nil {

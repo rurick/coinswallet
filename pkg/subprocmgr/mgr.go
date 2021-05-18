@@ -10,29 +10,33 @@ import (
 	"sync"
 )
 
-// Contains list of names of gorutines
+// Contains list of names of goroutines
 type Goroutines struct {
 	sync.RWMutex
 	done chan bool
 	List map[string]bool
 
-	onceNew    sync.Once
-	onceRemove sync.Once
+	onceNew   sync.Once
+	onceClose sync.Once
 }
 
 // initializing a new goroutines list
 func New() *Goroutines {
 	g := &Goroutines{}
+
+	// initialisation of Done channel
+	g.onceNew.Do(func() {
+		g.done = make(chan bool, 1)
+	})
+
+	g.Lock()
 	g.List = make(map[string]bool)
+	g.Unlock()
 	return g
 }
 
 // Add add name of goroutine to list
 func (g *Goroutines) Add(name string) {
-	// initialisation of Done channel
-	g.onceNew.Do(func() {
-		g.done = make(chan bool)
-	})
 
 	g.Lock()
 	defer g.Unlock()
@@ -46,16 +50,18 @@ func (g *Goroutines) Remove(name string) {
 	delete(g.List, name)
 	g.Unlock()
 
-	// if all goroutines removed
+	// empty test. Not in lock block because Empty user RLock
 	if g.Empty() {
-		g.onceRemove.Do(func() {
-			g.done <- true
-		})
+		g.closeChan()
 	}
 }
 
-// return channel wich set up true when all goroutines removed
+// return channel witch set up true when all goroutines removed
 func (g *Goroutines) Done() chan bool {
+	// if all goroutines removed
+	if g.Empty() {
+		g.closeChan()
+	}
 	return g.done
 }
 
@@ -71,4 +77,11 @@ func (g *Goroutines) Len() int {
 	g.RLock()
 	defer g.RUnlock()
 	return len(g.List)
+}
+
+// closeChan close channel done one time
+func (g *Goroutines) closeChan() {
+	g.onceClose.Do(func() {
+		g.done <- true
+	})
 }

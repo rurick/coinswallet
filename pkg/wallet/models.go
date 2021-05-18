@@ -29,6 +29,9 @@ type accountModel interface {
 
 	// Create new object in database
 	Create(name string) error
+
+	// Transfer - creating a payment form account to account with id "toID"
+	Transfer(toID int64, amount float64) error
 }
 
 // interface defined payment model for storage
@@ -39,9 +42,9 @@ type paymentModel interface {
 	Date() time.Time
 	// Amount return payments amount
 	Amount() float64
-	//From return payer account id
+	// From return payer account id
 	From() int64
-	//To retern recipient account id
+	// To return recipient account id
 	To() int64
 }
 
