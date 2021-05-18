@@ -73,6 +73,24 @@ func (a *Account) Transfer(toName AccountName, amount float64) (err error) {
 	return
 }
 
+// List - return list of all wallets account names
+// Wallets listed ordering by id
+// offset and limit are using for set slice bound of list
+// if limit = -1, then no limit
+func (a *Account) List(offset, limit int64) ([]AccountName, error) {
+	lst, err := a.m.List(offset, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert result type
+	var res []AccountName
+	for _, n := range lst {
+		res = append(res, AccountName(n))
+	}
+	return res, nil
+}
+
 //
 // load data from model to Account
 func (a *Account) load() (err error) {

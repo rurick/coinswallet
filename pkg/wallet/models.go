@@ -32,6 +32,9 @@ type accountModel interface {
 
 	// Transfer - creating a payment form account to account with id "toID"
 	Transfer(toID int64, amount float64) error
+
+	// List - return list of all wallets account names
+	List(offset, limit int64) ([]string, error)
 }
 
 // interface defined payment model for storage

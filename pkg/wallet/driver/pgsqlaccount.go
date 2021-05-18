@@ -143,30 +143,31 @@ func (pg *PgSqlAccount) Create(name string) error {
 	return nil
 }
 
-// AccountsList - return list of all wallets accounts
+// List - return list of all wallets account names
 // Wallets listed ordering by id
 // offset and limit are using for set slice bound of list
+// if limit = -1, then no limit
 // Important! When any fields will be added into table, then need to add one in to SELECT query
-func AccountsList(offset, limit int64) ([]PgSqlAccount, error) {
-	rows, err := dbPool.Query(dbContext, `
-		SELECT id, name, balance, currency 
-		FROM $1 
-		ORDER BY id
-		OFFSET $2
-		LIMIT $3`, accountTableName, offset, limit)
+func (pg *PgSqlAccount) List(offset, limit int64) ([]string, error) {
+	sql := `SELECT name FROM $1 ORDER BY id OFFSET $2`
+	if limit > 0 {
+		sql += fmt.Sprintf(` LIMIT %d`, limit)
+	}
+	rows, err := dbPool.Query(dbContext, sql, accountTableName, offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var res []PgSqlAccount
+	var (
+		res []string
+		s   string
+	)
 	for rows.Next() {
-		pg := PgSqlAccount{}
-		if err := rows.Scan(
-			&pg.id, &pg.name, &pg.balance, &pg.currency); err != nil {
+		if err := rows.Scan(&s); err != nil {
 			return nil, err
 		}
-		res = append(res, pg)
+		res = append(res, s)
 	}
 	return res, nil
 }
