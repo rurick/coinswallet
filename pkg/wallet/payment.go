@@ -14,4 +14,7 @@ type Payment struct {
 	Amount float64
 	FromID int64
 	ToID   int64
+
+	// pointer to implementation of model
+	m paymentModel
 }
