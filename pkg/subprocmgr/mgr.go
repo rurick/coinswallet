@@ -3,7 +3,7 @@
 
 // the package allows you to monitor of running goroutines
 // it was useful when you need wait when all your goroutines will finished
-// look in mgr_test.go file for usage
+// look Test_Usage* in mgr_test.go file for usage
 
 package subprocmgr
 
@@ -51,7 +51,7 @@ func (g *Goroutines) Remove(name string) {
 	delete(g.List, name)
 	g.Unlock()
 
-	// empty test. Not in lock block because Empty user RLock
+	// empty test. Not in lock block because Empty user RLock(else deadlock)
 	if g.Empty() {
 		g.closeChan()
 	}
