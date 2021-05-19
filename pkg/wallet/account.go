@@ -8,6 +8,7 @@
 package wallet
 
 import (
+	"coinswallet/pkg/wallet/models"
 	"errors"
 	"regexp"
 )
@@ -26,7 +27,9 @@ type Account struct {
 	Currency string
 
 	// pointer to implementation of model
-	m accountModel
+	m models.Account
+	// database driver
+	dbDriver string
 }
 
 // Register - Create a new wallet account with zero balance
@@ -116,7 +119,9 @@ func (a *Account) load() (err error) {
 //
 // New - create new instance of Account
 func New() (*Account, error) {
-	m, err := accountFactory()
+	const dbDriver = "postgresql"
+
+	m, err := models.AccountFactory(dbDriver)
 	if err != nil {
 		return nil, err
 	}

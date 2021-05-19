@@ -1,6 +1,7 @@
 package wallet
 
 import (
+	"coinswallet/pkg/wallet/models"
 	"time"
 )
 
@@ -16,5 +17,5 @@ type Payment struct {
 	ToID   int64
 
 	// pointer to implementation of model
-	m paymentModel
+	m models.Payment
 }

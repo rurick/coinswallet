@@ -2,19 +2,15 @@
 //
 // this model can used diffrent engine of database
 // for each of the engine need to define its implementation
-package wallet
+package models
 
 import (
+	"coinswallet/pkg/wallet/models/driver"
 	"fmt"
-	"time"
-
-	"coinswallet/pkg/wallet/driver"
 )
 
-const dbEngine = "postgresql"
-
 // interface defined account model for storage
-type accountModel interface {
+type Account interface {
 	// ID return id of wallet account
 	ID() int64
 	// Name return name of wallet account
@@ -41,43 +37,16 @@ type accountModel interface {
 	List(offset, limit int64) ([]string, error)
 }
 
-// interface defined payment model for storage
-type paymentModel interface {
-	// ID return id of payment
-	ID() int64
-	// Date return date and time of payment
-	Date() time.Time
-	// Amount return payments amount
-	Amount() float64
-	// From return payer account id
-	From() int64
-	// To return recipient account id
-	To() int64
-}
-
 //
-// create model instance using current DBEngine
-func accountFactory() (accountModel, error) {
-	switch dbEngine {
+// AccountFactory create model instance using dbDriver
+func AccountFactory(dbDriver string) (Account, error) {
+	switch dbDriver {
 	case "postgresql":
 		if err := driver.PgSQLInit(); err != nil {
 			return nil, err
 		}
 		return &driver.PgSqlAccount{}, nil
 	default:
-		return nil, fmt.Errorf("Unknown database engine: %s", dbEngine)
-	}
-}
-
-// create model instance using current DBEngine
-func paymentFactory() (paymentModel, error) {
-	switch dbEngine {
-	case "postgresql":
-		if err := driver.PgSQLInit(); err != nil {
-			return nil, err
-		}
-		return &driver.PgSqlPayment{}, nil
-	default:
-		return nil, fmt.Errorf("Unknown database engine: %s", dbEngine)
+		return nil, fmt.Errorf("unknown database engine: %s", dbDriver)
 	}
 }
