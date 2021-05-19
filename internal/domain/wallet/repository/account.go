@@ -1,6 +1,6 @@
 // repository implement interfaces for access to database layer
 //
-// this model can used diffrent driver of database
+// this model can used different driver of database
 // for each of a database need to define its implementation in driver
 package repository
 

@@ -16,29 +16,29 @@ type PgSqlPayment struct {
 	toID   int64
 }
 
-func (pg *PgSqlPayment) ID() int64 {
+func (pg PgSqlPayment) ID() int64 {
 	return pg.id
 }
-func (pg *PgSqlPayment) Date() time.Time {
+func (pg PgSqlPayment) Date() time.Time {
 	return pg.date
 }
-func (pg *PgSqlPayment) Amount() float64 {
+func (pg PgSqlPayment) Amount() float64 {
 	return pg.amount
 }
-func (pg *PgSqlPayment) From() int64 {
+func (pg PgSqlPayment) From() int64 {
 	return pg.fromID
 }
-func (pg *PgSqlPayment) To() int64 {
+func (pg PgSqlPayment) To() int64 {
 	return pg.toID
 }
 
 // Get - get payment by ID and load in object
 // Important! When any fields will be added into table, then need to add one in to SELECT query
-func (pg *PgSqlPayment) Get(id int64) error {
+func (pg PgSqlPayment) Get(id int64) error {
 	// check in cache
 	cacheKey := pg._cacheKey(id)
 	if v, ok := cache.Get(cacheKey); ok {
-		*pg = v.(PgSqlPayment)
+		pg = v.(PgSqlPayment)
 		return nil
 	}
 
@@ -52,7 +52,7 @@ func (pg *PgSqlPayment) Get(id int64) error {
 	if err := row.Scan(&pg.id, &pg.fromID, &pg.toID, &pg.amount, &pg.date); err != nil {
 		return err
 	}
-	cache.Set(cacheKey, *pg, 0)
+	cache.Set(cacheKey, pg, 0)
 	return nil
 }
 
@@ -61,7 +61,7 @@ func (pg *PgSqlPayment) Get(id int64) error {
 // offset and limit are using for set slice bound of list
 // if limit = -1, then no limit
 // Important! When any fields will be added into table, then need to add one in to SELECT query
-func (pg *PgSqlPayment) List(accountID, offset, limit int64) ([]interface{}, error) {
+func (pg PgSqlPayment) List(accountID, offset, limit int64) ([]interface{}, error) {
 
 	// try to get list from cache.
 	cacheKey := pg._cacheListKey(accountID)
@@ -70,10 +70,10 @@ func (pg *PgSqlPayment) List(accountID, offset, limit int64) ([]interface{}, err
 	}
 
 	sql := `
-		SELECT id, "from", "to", amount, date 
+		SELECT "id", "from", "to", "amount", "date"
 		FROM payments
 		WHERE
-			from = $1 OR to = $1
+			"from" = $1 OR "to" = $1
 		ORDER BY id
 		OFFSET $2`
 	if limit >= 0 {
@@ -104,7 +104,7 @@ func (pg *PgSqlPayment) List(accountID, offset, limit int64) ([]interface{}, err
 // offset and limit are using for set slice bound of list
 // if limit = -1, then no limit
 // Important! When any fields will be added into table, then need to add one in to SELECT query
-func (pg *PgSqlPayment) ListAll(offset, limit int64) ([]interface{}, error) {
+func (pg PgSqlPayment) ListAll(offset, limit int64) ([]interface{}, error) {
 
 	// try to get list from cache. For list of all payments used cacheKey for accountID=-1
 	cacheKey := pg._cacheListKey(-1)
@@ -122,7 +122,6 @@ func (pg *PgSqlPayment) ListAll(offset, limit int64) ([]interface{}, error) {
 	}
 
 	rows, err := dbPool.Query(dbContext, sql, offset)
-
 	if err != nil {
 		return nil, err
 	}
@@ -130,23 +129,23 @@ func (pg *PgSqlPayment) ListAll(offset, limit int64) ([]interface{}, error) {
 
 	var res []interface{}
 	for rows.Next() {
-		pg := PgSqlPayment{}
+		p := PgSqlPayment{}
 		if err := rows.Scan(
-			&pg.id, &pg.fromID, &pg.toID, &pg.amount, &pg.date); err != nil {
+			&p.id, &p.fromID, &p.toID, &p.amount, &p.date); err != nil {
 			return nil, err
 		}
-		res = append(res, pg)
+		res = append(res, p)
 	}
 	cache.Set(cacheKey, res, 0)
 	return res, nil
 }
 
 // generate key for in memory cache
-func (pg *PgSqlPayment) _cacheKey(id int64) string {
+func (pg PgSqlPayment) _cacheKey(id int64) string {
 	return fmt.Sprintf("PgSqlPayment%d", id)
 }
 
 // generate key for list in memory cache
-func (pg *PgSqlPayment) _cacheListKey(accountID int64) string {
+func (pg PgSqlPayment) _cacheListKey(accountID int64) string {
 	return fmt.Sprintf("List%d", accountID)
 }

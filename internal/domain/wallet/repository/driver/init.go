@@ -1,3 +1,22 @@
+// postgresql driver for data manipulation for repository entities
+
+// for minimisation queries count to database this driver use memory cache from package coinswallet/pkg/memcache
+
+// configuration for connection to database getting from OS environments:
+// # PostgreSQL connection
+// PGSQL_HOST=127.0.0.1
+// PGSQL_NAME=coins
+// PGSQL_USER=coins
+// PGSQL_PASS=coins
+// PGSQL_PORT=5432
+//
+// # Memory cache settings (in minutes)
+// CacheExpTime=10
+
+// By default file with this environments locate in .env file at root of project
+// this file load in getConfiguration function
+// also this environments can be set in OS
+
 package driver
 
 import (
@@ -47,7 +66,7 @@ func getConfiguration() configuration {
 		logger.Warning("[Wallet][getConfiguration]", err)
 	}
 
-	//cacheExpTime
+	// cacheExpTime
 	cacheExpTime := os.Getenv("CacheExpTime")
 	if cacheExpTime == "" {
 		cacheExpTime = "10"

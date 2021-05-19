@@ -1,6 +1,10 @@
 // Copyright 2021 (c) Yuriy Iovkov aka Rurick.
 // yuriyiovkov@gmail.com; telegram: @yuriyiovkov
 
+// Important!
+// for successfully test passed run it from directory where file .env is
+// or set up the ENV in your OS environment
+
 package entity
 
 import (
@@ -23,7 +27,7 @@ func Test_Create(t *testing.T) {
 		{
 			"with valid name",
 			args{
-				"mywallet",
+				"mywallet_76ck76wecoan0vl",
 				-1,
 			},
 			false,
@@ -39,7 +43,7 @@ func Test_Create(t *testing.T) {
 		{
 			"with exists name",
 			args{
-				"mywallet",
+				"mywallet_76ck76wecoan0vl",
 				-1,
 			},
 			true,
@@ -84,7 +88,7 @@ func Test_Deposit(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewAccount() error : %v ", err)
 	}
-	const accName = "testacc"
+	const accName = "testacc_76ck76wecoan0vl"
 
 	t.Run("register new account", func(t *testing.T) {
 		err = a.Register(accName)
@@ -134,8 +138,8 @@ func Test_Transfer(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewAccount() error : %v ", err)
 	}
-	const accName1 = "testacc1"
-	const accName2 = "testacc2"
+	const accName1 = "testacc1_76ck76wecoan0vl"
+	const accName2 = "testacc2_76ck76wecoan0vl"
 
 	t.Run("register new account", func(t *testing.T) {
 		err = a1.Register(accName1)

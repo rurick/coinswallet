@@ -30,24 +30,23 @@ func (pg *PgSqlAccount) Balance() float64 {
 }
 
 // Find - find wallet with name and load in object
-// Important! When any fields will be added into table, then need to add one in to SELECT query
 func (pg *PgSqlAccount) Find(name string) error {
-	row := dbPool.QueryRow(dbContext, `
-		SELECT id, name, balance, currency 
-		FROM accounts
-		WHERE 
-			"name" = $1 
-		LIMIT 1`, name)
-	if err := row.Scan(
-		&pg.id, &pg.name, &pg.balance, &pg.currency); err != nil {
+	row := dbPool.QueryRow(dbContext, `SELECT id FROM accounts WHERE "name" = $1 LIMIT 1`, name)
+	var id int64
+	if err := row.Scan(&id); err != nil {
 		return err
 	}
-	return nil
+	return pg.Get(id)
 }
 
 // Get - get wallet by ID and load in object
 // Important! When any fields will be added into table, then need to add one in to SELECT query
 func (pg *PgSqlAccount) Get(id int64) error {
+	cacheKey := pg.cacheKey(id)
+	if v, ok := cache.Get(cacheKey); ok {
+		*pg = v.(PgSqlAccount)
+		return nil
+	}
 	row := dbPool.QueryRow(dbContext, `
 		SELECT id, name, balance, currency 
 		FROM accounts
@@ -58,6 +57,7 @@ func (pg *PgSqlAccount) Get(id int64) error {
 		&pg.id, &pg.name, &pg.balance, &pg.currency); err != nil {
 		return err
 	}
+	cache.Set(cacheKey, *pg, 0)
 	return nil
 }
 
@@ -76,6 +76,7 @@ func (pg *PgSqlAccount) Deposit(amount float64) (int64, error) {
 		}
 		return 0, err
 	}
+	_ = cache.Delete(pg.cacheKey(pg.id))
 
 	// create payment
 	var paymentID int64
@@ -93,6 +94,9 @@ func (pg *PgSqlAccount) Deposit(amount float64) (int64, error) {
 	if err = tx.Commit(dbContext); err != nil {
 		return 0, err
 	}
+
+	// on success update object pg
+	pg.balance += amount
 
 	return paymentID, nil
 }
@@ -135,6 +139,7 @@ func (pg *PgSqlAccount) Transfer(toID int64, amount float64) (int64, error) {
 		}
 		return 0, err
 	}
+	_ = cache.Delete(pg.cacheKey(to.id))
 	if _, err = tx.Exec(dbContext, `UPDATE accounts SET balance = balance - $1 WHERE id = $2`,
 		amount, pg.id); err != nil {
 		if e := tx.Rollback(dbContext); e != nil {
@@ -142,6 +147,7 @@ func (pg *PgSqlAccount) Transfer(toID int64, amount float64) (int64, error) {
 		}
 		return 0, err
 	}
+	_ = cache.Delete(pg.cacheKey(pg.id))
 
 	// create payment
 	var paymentID int64
@@ -160,7 +166,9 @@ func (pg *PgSqlAccount) Transfer(toID int64, amount float64) (int64, error) {
 		return 0, err
 	}
 
+	// on success update object pg
 	pg.balance -= amount
+
 	return paymentID, nil
 }
 
@@ -191,6 +199,7 @@ func (pg *PgSqlAccount) Delete() error {
 	if _, err := dbPool.Exec(dbContext, `DELETE FROM accounts WHERE id = $1`, pg.id); err != nil {
 		return err
 	}
+	_ = cache.Delete(pg.cacheKey(pg.id))
 	return nil
 }
 
@@ -234,4 +243,8 @@ func (pg *PgSqlAccount) clearPaymentsListCache() {
 	// clear cache for all payments list
 	k = p._cacheListKey(-1)
 	_ = cache.Delete(k)
+}
+
+func (pg *PgSqlAccount) cacheKey(id int64) string {
+	return fmt.Sprintf("account%d", id)
 }
