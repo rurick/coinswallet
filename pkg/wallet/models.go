@@ -29,9 +29,13 @@ type accountModel interface {
 
 	// Create new object in database
 	Create(name string) error
+	// Delete - delete wallet account
+	Delete() error
 
 	// Transfer - creating a payment form account to account with id "toID"
-	Transfer(toID int64, amount float64) error
+	Transfer(toID int64, amount float64) (int64, error)
+	// Deposit - add amount to account balance
+	Deposit(amount float64) (int64, error)
 
 	// List - return list of all wallets account names
 	List(offset, limit int64) ([]string, error)

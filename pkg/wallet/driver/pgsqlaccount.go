@@ -62,34 +62,69 @@ func (pg *PgSqlAccount) Get(id int64) error {
 	return nil
 }
 
-// Transfer - creating a payment form account to account with id "toID"
-// function check that recipient are exists and that the account balance is sufficient
-func (pg *PgSqlAccount) Transfer(toID int64, amount float64) error {
+// Deposit - add amount to account balance
+func (pg *PgSqlAccount) Deposit(amount float64) (int64, error) {
 	tx, err := dbPool.Begin(dbContext)
 	if err != nil {
-		return err
+		return 0, err
+	}
+
+	// update balances
+	if _, err = tx.Exec(dbContext, `UPDATE $1 SET balance = balance + $2 WHERE id = $4 LIMIT 1`,
+		accountTableName, amount, pg.id); err != nil {
+		if e := tx.Rollback(dbContext); e != nil {
+			return 0, e
+		}
+		return 0, err
+	}
+
+	// create payment
+	var paymentID int64
+	row := tx.QueryRow(dbContext, `
+		INSERT INTO $1 (from, to, amount, date) VALUES(NULL, $2, $3, NOW()) RETURNING id`,
+		paymentTableName, pg.id, amount)
+	if err = row.Scan(&paymentID); err != nil {
+		if e := tx.Rollback(dbContext); e != nil {
+			return 0, e
+		}
+		return 0, err
+	}
+
+	if err = tx.Commit(dbContext); err != nil {
+		return 0, err
+	}
+
+	return paymentID, nil
+}
+
+// Transfer - creating a payment form account to account with id "toID"
+// function check that recipient are exists and that the account balance is sufficient
+func (pg *PgSqlAccount) Transfer(toID int64, amount float64) (int64, error) {
+	tx, err := dbPool.Begin(dbContext)
+	if err != nil {
+		return 0, err
 	}
 
 	{
 		// reread my balance from database in current transaction
 		me := tx.QueryRow(dbContext, `SELECT balance FROM $1 WHERE "id" = $2 LIMIT 1`, accountTableName, pg.id)
 		if err := me.Scan(&pg.balance); err != nil {
-			return err
+			return 0, err
 		}
 	}
 
 	// check balance
 	if pg.balance < amount {
 		if err = tx.Rollback(dbContext); err != nil {
-			return err
+			return 0, err
 		}
-		return fmt.Errorf("no enoth currency. balance: %f, need: %f", pg.balance, amount)
+		return 0, fmt.Errorf("no enoth currency. balance: %f, need: %f", pg.balance, amount)
 	}
 
 	// check recipient
 	to := PgSqlAccount{}
 	if err = to.Get(toID); err != nil {
-		return fmt.Errorf("recipient not found: %v", err)
+		return 0, fmt.Errorf("recipient not found: %v", err)
 	}
 
 	// update balances
@@ -99,26 +134,28 @@ func (pg *PgSqlAccount) Transfer(toID int64, amount float64) error {
 			`,
 		accountTableName, amount, pg.id, to.id); err != nil {
 		if e := tx.Rollback(dbContext); e != nil {
-			return e
+			return 0, e
 		}
-		return err
+		return 0, err
 	}
 
 	// create payment
-	if _, err = tx.Exec(dbContext, `
-		INSERT INTO $1 (from, to, amount, date) VALUES($2, $3, $4, NOW())`,
-		paymentTableName, pg.id, toID, amount); err != nil {
+	var paymentID int64
+	row := tx.QueryRow(dbContext, `
+		INSERT INTO $1 (from, to, amount, date) VALUES($2, $3, $4, NOW()) RETURNING id`,
+		paymentTableName, pg.id, toID, amount)
+	if err = row.Scan(&paymentID); err != nil {
 		if e := tx.Rollback(dbContext); e != nil {
-			return e
+			return 0, e
 		}
-		return err
+		return 0, err
 	}
 
 	if err = tx.Commit(dbContext); err != nil {
-		return err
+		return 0, err
 	}
 
-	return nil
+	return paymentID, nil
 }
 
 // Create - create a new account with name and load one in object
@@ -140,6 +177,17 @@ func (pg *PgSqlAccount) Create(name string) error {
 	pg.balance = 0
 	pg.currency = defaultCurrency
 	pg.name = name
+	return nil
+}
+
+// Delete - delete wallet account
+func (pg *PgSqlAccount) Delete() error {
+	if _, err := dbPool.Exec(dbContext,
+		`DELETE FROM $1 WHERE id = $2 LIMIT 1`,
+		accountTableName,
+		pg.id); err != nil {
+		return err
+	}
 	return nil
 }
 

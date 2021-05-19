@@ -4,13 +4,11 @@
 package wallet
 
 import (
-	"context"
 	"testing"
 )
 
 func Test_Validate(t *testing.T) {
 	type args struct {
-		ctx  context.Context
 		name AccountName
 	}
 	tests := []struct {
@@ -21,7 +19,6 @@ func Test_Validate(t *testing.T) {
 		{
 			"valid mixed-case account name",
 			args{
-				context.Background(),
 				"QWEasdf45",
 			},
 			false,
@@ -29,7 +26,6 @@ func Test_Validate(t *testing.T) {
 		{
 			"valid lowercase account name",
 			args{
-				context.Background(),
 				"asdf45",
 			},
 			false,
@@ -37,7 +33,6 @@ func Test_Validate(t *testing.T) {
 		{
 			"invalid account name",
 			args{
-				context.Background(),
 				"asdf 45",
 			},
 			true,
@@ -45,7 +40,6 @@ func Test_Validate(t *testing.T) {
 		{
 			"empty account name",
 			args{
-				context.Background(),
 				"",
 			},
 			true,

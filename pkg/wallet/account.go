@@ -29,12 +29,16 @@ type Account struct {
 	m accountModel
 }
 
-// Register - Create new wallet account
-func (a *Account) Register(name AccountName) error {
-	if err := a.m.Create(string(name)); err != nil {
-		return err
-	}
-	return nil
+// Register - Create a new wallet account with zero balance
+func (a *Account) Register(name AccountName) (err error) {
+	err = a.m.Create(string(name))
+	return
+}
+
+// Delete - delete wallet account
+func (a *Account) Delete() (err error) {
+	err = a.m.Delete()
+	return
 }
 
 // Validate - validate account for available symbols and length (4-32)
@@ -59,7 +63,8 @@ func (a *Account) Get(id AccountID) (err error) {
 }
 
 // Transfer creating a payment form account "a" to account with id "toID"
-func (a *Account) Transfer(toName AccountName, amount float64) (err error) {
+// returning id of payment
+func (a *Account) Transfer(toName AccountName, amount float64) (id int64, err error) {
 	var to *Account
 
 	if to, err = New(); err != nil {
@@ -69,7 +74,14 @@ func (a *Account) Transfer(toName AccountName, amount float64) (err error) {
 		return
 	}
 
-	err = a.m.Transfer(int64(to.ID), amount)
+	id, err = a.m.Transfer(int64(to.ID), amount)
+	return
+}
+
+// Deposit - add amount to account balance.
+// returning id of payment
+func (a *Account) Deposit(amount float64) (id int64, err error) {
+	id, err = a.m.Deposit(amount)
 	return
 }
 
@@ -95,7 +107,7 @@ func (a *Account) List(offset, limit int64) ([]AccountName, error) {
 // load data from model to Account
 func (a *Account) load() (err error) {
 	if a.m == nil {
-		return errors.New("Create new instance calling New() method first")
+		return errors.New("create new instance calling New() method first")
 	}
 	err = a.Get(a.ID)
 	return
