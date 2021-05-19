@@ -21,9 +21,20 @@ type Payment struct {
 	rep repository.Payment
 }
 
+func (a *Payment) load() {
+	a.ID = ID(a.rep.ID())
+	a.Amount = a.rep.Amount()
+	a.Date = a.rep.Date()
+	a.FromID = a.rep.From()
+	a.ToID = a.rep.To()
+}
+
 // Get  account by id
 func (a *Payment) Get(id ID) (err error) {
 	err = a.rep.Get(int64(id))
+	if err == nil {
+		a.load()
+	}
 	return
 }
 
@@ -51,7 +62,7 @@ func PaymentsList(account *Account, offset, limit int64) ([]Payment, error) {
 	if err != nil {
 		return nil, err
 	}
-	lst := []interface{}{}
+	var lst []interface{}
 	if account == nil {
 		if lst, err = p.rep.ListAll(offset, limit); err != nil {
 			return nil, err
@@ -65,13 +76,8 @@ func PaymentsList(account *Account, offset, limit int64) ([]Payment, error) {
 	var res []Payment
 	for _, n := range lst {
 		rp := n.(repository.Payment)
-		p := Payment{
-			ID:     ID(rp.ID()),
-			Date:   rp.Date(),
-			Amount: rp.Amount(),
-			FromID: rp.From(),
-			ToID:   rp.To(),
-		}
+		p := Payment{rep: rp} // it is able don't call NewPayment() because it was called early at begin of function so  driver was initialised
+		p.load()
 		res = append(res, p)
 	}
 	return res, nil

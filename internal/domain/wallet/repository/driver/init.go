@@ -151,7 +151,7 @@ func pgCreatePaymentsTable() error {
 	sql := `CREATE TABLE public.payments
 			(
 				id bigserial NOT NULL,
-				"from" bigint NULL,
+				"from" bigint NOT NULL,
 				"to" bigint NOT NULL,
 				amount double precision NOT NULL DEFAULT 0,
 				date timestamp with time zone NOT NULL DEFAULT now(),

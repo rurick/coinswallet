@@ -35,7 +35,7 @@ func (pg *PgSqlPayment) To() int64 {
 // Get - get payment by ID and load in object
 // Important! When any fields will be added into table, then need to add one in to SELECT query
 func (pg *PgSqlPayment) Get(id int64) error {
-	//check in cache
+	// check in cache
 	cacheKey := pg._cacheKey(id)
 	if v, ok := cache.Get(cacheKey); ok {
 		*pg = v.(PgSqlPayment)
@@ -44,7 +44,7 @@ func (pg *PgSqlPayment) Get(id int64) error {
 
 	row := dbPool.QueryRow(dbContext, `
 		SELECT id, "from", "to", amount, date
-		FROM accounts
+		FROM payments
 		WHERE 
 			"id" = $1 
 		LIMIT 1`, id)
@@ -62,6 +62,13 @@ func (pg *PgSqlPayment) Get(id int64) error {
 // if limit = -1, then no limit
 // Important! When any fields will be added into table, then need to add one in to SELECT query
 func (pg *PgSqlPayment) List(accountID, offset, limit int64) ([]interface{}, error) {
+
+	// try to get list from cache.
+	cacheKey := pg._cacheListKey(accountID)
+	if v, ok := cache.Get(cacheKey); ok {
+		return v.([]interface{}), nil
+	}
+
 	sql := `
 		SELECT id, "from", "to", amount, date 
 		FROM payments
@@ -88,6 +95,7 @@ func (pg *PgSqlPayment) List(accountID, offset, limit int64) ([]interface{}, err
 		}
 		res = append(res, pg)
 	}
+	cache.Set(cacheKey, res, 0)
 	return res, nil
 }
 
@@ -97,6 +105,13 @@ func (pg *PgSqlPayment) List(accountID, offset, limit int64) ([]interface{}, err
 // if limit = -1, then no limit
 // Important! When any fields will be added into table, then need to add one in to SELECT query
 func (pg *PgSqlPayment) ListAll(offset, limit int64) ([]interface{}, error) {
+
+	// try to get list from cache. For list of all payments used cacheKey for accountID=-1
+	cacheKey := pg._cacheListKey(-1)
+	if v, ok := cache.Get(cacheKey); ok {
+		return v.([]interface{}), nil
+	}
+
 	sql := `
 		SELECT id, "from", "to", amount, date
 		FROM payments
@@ -122,10 +137,16 @@ func (pg *PgSqlPayment) ListAll(offset, limit int64) ([]interface{}, error) {
 		}
 		res = append(res, pg)
 	}
+	cache.Set(cacheKey, res, 0)
 	return res, nil
 }
 
 // generate key for in memory cache
 func (pg *PgSqlPayment) _cacheKey(id int64) string {
 	return fmt.Sprintf("PgSqlPayment%d", id)
+}
+
+// generate key for list in memory cache
+func (pg *PgSqlPayment) _cacheListKey(accountID int64) string {
+	return fmt.Sprintf("List%d", accountID)
 }

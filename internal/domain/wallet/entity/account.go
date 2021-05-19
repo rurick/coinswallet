@@ -36,10 +36,9 @@ type Account struct {
 // Register - Create a new wallet account with zero balance
 func (a *Account) Register(name AccountName) (err error) {
 	err = a.rep.Create(string(name))
-	a.ID = AccountID(a.rep.ID())
-	a.Name = AccountName(a.rep.Name())
-	a.Balance = a.rep.Balance()
-	a.Currency = a.rep.Currency()
+	if err == nil {
+		a.load()
+	}
 	return
 }
 
@@ -61,18 +60,24 @@ func (a *Account) Validate(name AccountName) error {
 // Find find account by name
 func (a *Account) Find(name AccountName) (err error) {
 	err = a.rep.Find(string(name))
+	if err == nil {
+		a.load()
+	}
 	return
 }
 
 // Get  account by id
 func (a *Account) Get(id AccountID) (err error) {
 	err = a.rep.Get(int64(id))
+	if err == nil {
+		a.load()
+	}
 	return
 }
 
 // Transfer creating a payment form account "a" to account with id "toID"
 // returning id of payment
-func (a *Account) Transfer(toName AccountName, amount float64) (id int64, err error) {
+func (a *Account) Transfer(toName AccountName, amount float64) (paymentID int64, err error) {
 	var to *Account
 
 	if to, err = NewAccount(); err != nil {
@@ -82,14 +87,18 @@ func (a *Account) Transfer(toName AccountName, amount float64) (id int64, err er
 		return
 	}
 
-	id, err = a.rep.Transfer(int64(to.ID), amount)
+	paymentID, err = a.rep.Transfer(int64(to.ID), amount)
+	if err == nil {
+		a.load()
+	}
+
 	return
 }
 
 // Deposit - add amount to account balance.
 // returning id of payment
-func (a *Account) Deposit(amount float64) (id int64, err error) {
-	id, err = a.rep.Deposit(amount)
+func (a *Account) Deposit(amount float64) (paymentID int64, err error) {
+	paymentID, err = a.rep.Deposit(amount)
 	return
 }
 
@@ -112,12 +121,12 @@ func (a *Account) List(offset, limit int64) ([]AccountName, error) {
 }
 
 //
-// load data from model to Account
-func (a *Account) load() (err error) {
-	if a.rep == nil {
-		return errors.New("create new instance calling NewAccount() method first")
-	}
-	err = a.Get(a.ID)
+// load data from driver to Account
+func (a *Account) load() {
+	a.ID = AccountID(a.rep.ID())
+	a.Name = AccountName(a.rep.Name())
+	a.Balance = a.rep.Balance()
+	a.Currency = a.rep.Currency()
 	return
 }
 

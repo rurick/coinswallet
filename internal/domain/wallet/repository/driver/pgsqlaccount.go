@@ -80,7 +80,7 @@ func (pg *PgSqlAccount) Deposit(amount float64) (int64, error) {
 	// create payment
 	var paymentID int64
 	row := tx.QueryRow(dbContext, `
-		INSERT INTO payments ("from", "to", "amount", "date") VALUES(NULL, $1, $2, NOW()) RETURNING id`,
+		INSERT INTO payments ("from", "to", "amount", "date") VALUES(0, $1, $2, NOW()) RETURNING id`,
 		pg.id, amount)
 	if err = row.Scan(&paymentID); err != nil {
 		if e := tx.Rollback(dbContext); e != nil {
@@ -88,6 +88,7 @@ func (pg *PgSqlAccount) Deposit(amount float64) (int64, error) {
 		}
 		return 0, err
 	}
+	pg.clearPaymentsListCache()
 
 	if err = tx.Commit(dbContext); err != nil {
 		return 0, err
@@ -127,11 +128,15 @@ func (pg *PgSqlAccount) Transfer(toID int64, amount float64) (int64, error) {
 	}
 
 	// update balances
-	if _, err = tx.Exec(dbContext, `
-			UPDATE accounts SET balance = balance - $1 WHERE id = $2;
-			UPDATE accounts SET balance = balance + $1 WHERE id = $3;
-			`,
-		amount, pg.id, to.id); err != nil {
+	if _, err = tx.Exec(dbContext, `UPDATE accounts SET balance = balance + $1 WHERE id = $2`,
+		amount, to.id); err != nil {
+		if e := tx.Rollback(dbContext); e != nil {
+			return 0, e
+		}
+		return 0, err
+	}
+	if _, err = tx.Exec(dbContext, `UPDATE accounts SET balance = balance - $1 WHERE id = $2`,
+		amount, pg.id); err != nil {
 		if e := tx.Rollback(dbContext); e != nil {
 			return 0, e
 		}
@@ -141,7 +146,7 @@ func (pg *PgSqlAccount) Transfer(toID int64, amount float64) (int64, error) {
 	// create payment
 	var paymentID int64
 	row := tx.QueryRow(dbContext, `
-		INSERT INTO payments (from, to, amount, date) VALUES($1, $2, $3, NOW()) RETURNING id`,
+		INSERT INTO payments ("from", "to", "amount", "date") VALUES($1, $2, $3, NOW()) RETURNING id`,
 		pg.id, toID, amount)
 	if err = row.Scan(&paymentID); err != nil {
 		if e := tx.Rollback(dbContext); e != nil {
@@ -149,11 +154,13 @@ func (pg *PgSqlAccount) Transfer(toID int64, amount float64) (int64, error) {
 		}
 		return 0, err
 	}
+	pg.clearPaymentsListCache()
 
 	if err = tx.Commit(dbContext); err != nil {
 		return 0, err
 	}
 
+	pg.balance -= amount
 	return paymentID, nil
 }
 
@@ -214,4 +221,17 @@ func (pg *PgSqlAccount) List(offset, limit int64) ([]string, error) {
 		res = append(res, s)
 	}
 	return res, nil
+}
+
+// clear list of account payments in cache
+func (pg *PgSqlAccount) clearPaymentsListCache() {
+	p := PgSqlPayment{}
+
+	// clear cache for accounts payment list
+	k := p._cacheListKey(pg.id)
+	_ = cache.Delete(k)
+
+	// clear cache for all payments list
+	k = p._cacheListKey(-1)
+	_ = cache.Delete(k)
 }

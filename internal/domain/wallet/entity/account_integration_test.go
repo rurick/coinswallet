@@ -82,32 +82,116 @@ func Test_Create(t *testing.T) {
 func Test_Deposit(t *testing.T) {
 	a, err := NewAccount()
 	if err != nil {
-		t.Errorf("NewAccount() error : %v ", err)
-		t.Fail()
+		t.Fatalf("NewAccount() error : %v ", err)
 	}
 	const accName = "testacc"
 
-	t.Log("register new account")
-	err = a.Register(accName)
+	t.Run("register new account", func(t *testing.T) {
+		err = a.Register(accName)
+		if err != nil {
+			t.Errorf("Register() error : %v ", err)
+		}
+	})
+
+	var tid int64
+	t.Run("deposit account", func(t *testing.T) {
+		if err = a.Find(accName); err != nil {
+			t.Fatal(err)
+		}
+
+		tid, err = a.Deposit(1)
+		if err != nil {
+			t.Errorf("Deposit() error : %v ", err)
+		}
+	})
+
+	t.Run("check payment exists", func(t *testing.T) {
+		p, err := NewPayment()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err = p.Get(ID(tid)); err != nil {
+			t.Errorf("Payment not found: %v", err)
+		}
+	})
+
+	// delete account
+	t.Run("delete account", func(t *testing.T) {
+		err = a.Delete()
+		if err != nil {
+			t.Errorf("Delete() error : %v ", err)
+		}
+	})
+
+}
+
+func Test_Transfer(t *testing.T) {
+	a1, err := NewAccount()
 	if err != nil {
-		t.Errorf("Register() error : %v ", err)
+		t.Fatalf("NewAccount() error : %v ", err)
 	}
-
-	t.Log("deposit account")
-	if err = a.Find(accName); err != nil {
-		t.Fatal(err)
-	}
-
-	tid, err := a.Deposit(1)
+	a2, err := NewAccount()
 	if err != nil {
-		t.Errorf("Deposit() error : %v ", err)
+		t.Fatalf("NewAccount() error : %v ", err)
 	}
-	t.Log("payment id: ", tid)
+	const accName1 = "testacc1"
+	const accName2 = "testacc2"
 
-	_ = a.Delete()
+	t.Run("register new account", func(t *testing.T) {
+		err = a1.Register(accName1)
+		if err != nil {
+			t.Fatalf("Register() error : %v ", err)
+		}
+		err = a2.Register(accName2)
+		if err != nil {
+			t.Fatalf("Register() error : %v ", err)
+		}
+	})
 
-	// TODO
-	// check that payment with id exists
-	_ = tid
+	t.Run("deposit account", func(t *testing.T) {
+		_, err = a1.Deposit(10)
+		if err != nil {
+			t.Errorf("Deposit() error : %v ", err)
+		}
+	})
+
+	// transfer
+	var tid int64
+	t.Run("transfer", func(t *testing.T) {
+		tid, err = a1.Transfer(accName2, 5)
+		if err != nil {
+			t.Errorf("Transfer() error : %v ", err)
+		}
+	})
+
+	t.Run("check payment exists", func(t *testing.T) {
+		p, err := NewPayment()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err = p.Get(ID(tid)); err != nil {
+			t.Errorf("Payment not found: %v", err)
+		}
+	})
+
+	// check balance
+	t.Run("check new balances", func(t *testing.T) {
+		_ = a2.Get(a2.ID) // reload from db with new values
+		if a1.Balance != 5 || a2.Balance != 5 {
+			t.Errorf("New balance error: %v, %v", a1.Balance, a2.Balance)
+		}
+	})
+
+	// delete accounts
+	t.Run("delete account", func(t *testing.T) {
+		err = a1.Delete()
+		if err != nil {
+			t.Errorf("Delete() error : %v ", err)
+		}
+		err = a2.Delete()
+		if err != nil {
+			t.Errorf("Delete() error : %v ", err)
+		}
+	})
 
 }
