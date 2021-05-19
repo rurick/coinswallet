@@ -1,7 +1,7 @@
 // Copyright 2021 (c) Yuriy Iovkov aka Rurick.
 // yuriyiovkov@gmail.com; telegram: @yuriyiovkov
 
-package wallet
+package entity
 
 import (
 	"testing"
@@ -49,9 +49,8 @@ func Test_Create(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a, err := New()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("New() error = %v, wantErr %v ", err, tt.wantErr)
-				return
+			if err != nil {
+				t.Fatalf("New() error = %v, wantErr %v ", err, tt.wantErr)
 			}
 			err = a.Register(tt.args.name)
 			if (err != nil) != tt.wantErr {
@@ -64,8 +63,11 @@ func Test_Create(t *testing.T) {
 
 	// delete created accounts
 	t.Run("delete existing accounts", func(t *testing.T) {
-		a, _ := New()
-		err := a.Get(tests[0].args.id)
+		a, err := New()
+		if err != nil {
+			t.Fatalf("New() error = %v", err)
+		}
+		err = a.Get(tests[0].args.id)
 		if err != nil {
 			t.Errorf("Get() error : %v ", err)
 		}

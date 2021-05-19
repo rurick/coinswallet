@@ -38,9 +38,10 @@ func getConfiguration() configuration {
 // Init - initialisation of PgSQL driver. Connect to database, checking for existing of table
 // On success Set module variables dbPool,dbContext,dbCancelFunc
 func PgSQLInit() (err error) {
-	config := getConfiguration()
 	once.Do(func() {
 		// This block will run once, when Init called first time
+
+		config := getConfiguration()
 
 		logger.Info("Wallet pgsql driver. Connecting to database...")
 		dbContext, dbCancelFunc = context.WithCancel(context.Background())
@@ -87,6 +88,9 @@ func PgSQLInit() (err error) {
 			logger.Info("Wallet pgsql driver. DB connection closed")
 		}(dbContext)
 	})
+	if err == nil && dbPool == nil {
+		err = errors.New("there's no connection to database")
+	}
 	return
 }
 

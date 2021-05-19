@@ -1,8 +1,9 @@
-package wallet
+package entity
 
 import (
-	"coinswallet/pkg/wallet/models"
 	"time"
+
+	"coinswallet/internal/domain/wallet/repository"
 )
 
 // ID identifier of payment. Integer value
@@ -17,5 +18,5 @@ type Payment struct {
 	ToID   int64
 
 	// pointer to implementation of model
-	m models.Payment
+	rep repository.Payment
 }

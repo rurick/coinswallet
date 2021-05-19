@@ -5,12 +5,13 @@
 // For saving data in database used model defined in model.go
 // Module can save data in different databases. For this action uses drivers, witch are defined in drivers directory
 
-package wallet
+package entity
 
 import (
-	"coinswallet/pkg/wallet/models"
 	"errors"
 	"regexp"
+
+	"coinswallet/internal/domain/wallet/repository"
 )
 
 type (
@@ -27,20 +28,20 @@ type Account struct {
 	Currency string
 
 	// pointer to implementation of model
-	m models.Account
+	rep repository.Account
 	// database driver
 	dbDriver string
 }
 
 // Register - Create a new wallet account with zero balance
 func (a *Account) Register(name AccountName) (err error) {
-	err = a.m.Create(string(name))
+	err = a.rep.Create(string(name))
 	return
 }
 
 // Delete - delete wallet account
 func (a *Account) Delete() (err error) {
-	err = a.m.Delete()
+	err = a.rep.Delete()
 	return
 }
 
@@ -55,13 +56,13 @@ func (a *Account) Validate(name AccountName) error {
 
 // Find find account by name
 func (a *Account) Find(name AccountName) (err error) {
-	err = a.m.Find(string(name))
+	err = a.rep.Find(string(name))
 	return
 }
 
 // Get  account by id
 func (a *Account) Get(id AccountID) (err error) {
-	err = a.m.Get(int64(id))
+	err = a.rep.Get(int64(id))
 	return
 }
 
@@ -77,14 +78,14 @@ func (a *Account) Transfer(toName AccountName, amount float64) (id int64, err er
 		return
 	}
 
-	id, err = a.m.Transfer(int64(to.ID), amount)
+	id, err = a.rep.Transfer(int64(to.ID), amount)
 	return
 }
 
 // Deposit - add amount to account balance.
 // returning id of payment
 func (a *Account) Deposit(amount float64) (id int64, err error) {
-	id, err = a.m.Deposit(amount)
+	id, err = a.rep.Deposit(amount)
 	return
 }
 
@@ -93,7 +94,7 @@ func (a *Account) Deposit(amount float64) (id int64, err error) {
 // offset and limit are using for set slice bound of list
 // if limit = -1, then no limit
 func (a *Account) List(offset, limit int64) ([]AccountName, error) {
-	lst, err := a.m.List(offset, limit)
+	lst, err := a.rep.List(offset, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +110,7 @@ func (a *Account) List(offset, limit int64) ([]AccountName, error) {
 //
 // load data from model to Account
 func (a *Account) load() (err error) {
-	if a.m == nil {
+	if a.rep == nil {
 		return errors.New("create new instance calling New() method first")
 	}
 	err = a.Get(a.ID)
@@ -121,11 +122,11 @@ func (a *Account) load() (err error) {
 func New() (*Account, error) {
 	const dbDriver = "postgresql"
 
-	m, err := models.AccountFactory(dbDriver)
+	rep, err := repository.AccountFactory(dbDriver)
 	if err != nil {
 		return nil, err
 	}
 	return &Account{
-		m: m,
+		rep: rep,
 	}, nil
 }

@@ -1,7 +1,7 @@
 // Copyright 2021 (c) Yuriy Iovkov aka Rurick.
 // yuriyiovkov@gmail.com; telegram: @yuriyiovkov
 
-package wallet
+package entity
 
 import (
 	"testing"

@@ -1,15 +1,16 @@
-// Models implement interfaces for access to database layer
+// repository implement interfaces for access to database layer
 //
-// this model can used diffrent engine of database
-// for each of the engine need to define its implementation
-package models
+// this model can used diffrent driver of database
+// for each of a database need to define its implementation in driver
+package repository
 
 import (
-	"coinswallet/pkg/wallet/models/driver"
 	"fmt"
+
+	"coinswallet/internal/domain/wallet/repository/driver"
 )
 
-// interface defined account model for storage
+// interface defined account repository for storage
 type Account interface {
 	// ID return id of wallet account
 	ID() int64
@@ -38,7 +39,7 @@ type Account interface {
 }
 
 //
-// AccountFactory create model instance using dbDriver
+// AccountFactory create repository instance using dbDriver
 func AccountFactory(dbDriver string) (Account, error) {
 	switch dbDriver {
 	case "postgresql":
