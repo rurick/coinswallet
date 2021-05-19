@@ -21,6 +21,12 @@ type Payment struct {
 	rep repository.Payment
 }
 
+// Get  account by id
+func (a *Payment) Get(id ID) (err error) {
+	err = a.rep.Get(int64(id))
+	return
+}
+
 //
 // NewPayment - create new instance of Payment
 func NewPayment() (*Payment, error) {

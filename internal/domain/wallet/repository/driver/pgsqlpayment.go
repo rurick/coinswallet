@@ -32,6 +32,30 @@ func (pg *PgSqlPayment) To() int64 {
 	return pg.toID
 }
 
+// Get - get payment by ID and load in object
+// Important! When any fields will be added into table, then need to add one in to SELECT query
+func (pg *PgSqlPayment) Get(id int64) error {
+	//check in cache
+	cacheKey := pg._cacheKey(id)
+	if v, ok := cache.Get(cacheKey); ok {
+		*pg = v.(PgSqlPayment)
+		return nil
+	}
+
+	row := dbPool.QueryRow(dbContext, `
+		SELECT id, "from", "to", amount, date
+		FROM accounts
+		WHERE 
+			"id" = $1 
+		LIMIT 1`, id)
+
+	if err := row.Scan(&pg.id, &pg.fromID, &pg.toID, &pg.amount, &pg.date); err != nil {
+		return err
+	}
+	cache.Set(cacheKey, *pg, 0)
+	return nil
+}
+
 // List - return list of payments for account with accountID
 // payments listed ordering by id
 // offset and limit are using for set slice bound of list
@@ -39,7 +63,7 @@ func (pg *PgSqlPayment) To() int64 {
 // Important! When any fields will be added into table, then need to add one in to SELECT query
 func (pg *PgSqlPayment) List(accountID, offset, limit int64) ([]interface{}, error) {
 	sql := `
-		SELECT id, from, to, amount, date 
+		SELECT id, "from", "to", amount, date 
 		FROM payments
 		WHERE
 			from = $1 OR to = $1
@@ -74,7 +98,7 @@ func (pg *PgSqlPayment) List(accountID, offset, limit int64) ([]interface{}, err
 // Important! When any fields will be added into table, then need to add one in to SELECT query
 func (pg *PgSqlPayment) ListAll(offset, limit int64) ([]interface{}, error) {
 	sql := `
-		SELECT id, from, to, amount, date 
+		SELECT id, "from", "to", amount, date
 		FROM payments
 		ORDER BY id
 		OFFSET $1`
@@ -99,4 +123,9 @@ func (pg *PgSqlPayment) ListAll(offset, limit int64) ([]interface{}, error) {
 		res = append(res, pg)
 	}
 	return res, nil
+}
+
+// generate key for in memory cache
+func (pg *PgSqlPayment) _cacheKey(id int64) string {
+	return fmt.Sprintf("PgSqlPayment%d", id)
 }

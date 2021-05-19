@@ -28,6 +28,8 @@ type Payment interface {
 	List(accountID, offset, limit int64) ([]interface{}, error)
 	// ListAll - return list of all payments
 	ListAll(offset, limit int64) ([]interface{}, error)
+
+	Get(id int64) error
 }
 
 // create repository instance using current DBEngine

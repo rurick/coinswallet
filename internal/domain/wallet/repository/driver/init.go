@@ -5,8 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"sync"
+	"time"
 
+	memorycache "coinswallet/pkg/memcache"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/joho/godotenv"
 	logger "github.com/sirupsen/logrus"
@@ -21,6 +24,10 @@ var (
 	dbContext context.Context
 	// Cancel function for context above
 	dbCancelFunc context.CancelFunc
+	// in memory cache
+	cache *memorycache.Cache
+	// package config
+	config configuration
 )
 
 // configuration for database connection
@@ -30,6 +37,8 @@ type configuration struct {
 	DBHost string
 	DBPort string
 	DBPass string
+
+	CacheExpTime time.Duration
 }
 
 // return configuration for database connection
@@ -37,13 +46,26 @@ func getConfiguration() configuration {
 	if err := godotenv.Load(); err != nil {
 		logger.Warning("[Wallet][getConfiguration]", err)
 	}
-	return configuration{
-		DBName: os.Getenv("PGSQL_NAME"),
-		DBUser: os.Getenv("PGSQL_USER"),
-		DBHost: os.Getenv("PGSQL_HOST"),
-		DBPort: os.Getenv("PGSQL_PORT"),
-		DBPass: os.Getenv("PGSQL_PASS"),
+
+	//cacheExpTime
+	cacheExpTime := os.Getenv("CacheExpTime")
+	if cacheExpTime == "" {
+		cacheExpTime = "10"
 	}
+	cET, err := strconv.ParseInt(cacheExpTime, 10, 64)
+	if err != nil {
+		cET = 10
+	}
+
+	c := configuration{
+		DBName:       os.Getenv("PGSQL_NAME"),
+		DBUser:       os.Getenv("PGSQL_USER"),
+		DBHost:       os.Getenv("PGSQL_HOST"),
+		DBPort:       os.Getenv("PGSQL_PORT"),
+		DBPass:       os.Getenv("PGSQL_PASS"),
+		CacheExpTime: time.Duration(cET) * time.Minute,
+	}
+	return c
 }
 
 // Init - initialisation of PgSQL driver. Connect to database, checking for existing of table
@@ -52,7 +74,8 @@ func PgSQLInit() (err error) {
 	once.Do(func() {
 		// This block will run once, when Init called first time
 
-		config := getConfiguration()
+		config = getConfiguration()
+		cache = memorycache.New(config.CacheExpTime, config.CacheExpTime)
 
 		logger.Info("Wallet pgsql driver. Connecting to database...")
 		dbContext, dbCancelFunc = context.WithCancel(context.Background())
