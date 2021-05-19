@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"sync"
 
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/joho/godotenv"
 	logger "github.com/sirupsen/logrus"
 )
 
@@ -32,7 +34,16 @@ type configuration struct {
 
 // return configuration for database connection
 func getConfiguration() configuration {
-	return configuration{}
+	if err := godotenv.Load(); err != nil {
+		logger.Warning("[Wallet][getConfiguration]", err)
+	}
+	return configuration{
+		DBName: os.Getenv("PGSQL_NAME"),
+		DBUser: os.Getenv("PGSQL_USER"),
+		DBHost: os.Getenv("PGSQL_HOST"),
+		DBPort: os.Getenv("PGSQL_PORT"),
+		DBPass: os.Getenv("PGSQL_PASS"),
+	}
 }
 
 // Init - initialisation of PgSQL driver. Connect to database, checking for existing of table
@@ -46,7 +57,7 @@ func PgSQLInit() (err error) {
 		logger.Info("Wallet pgsql driver. Connecting to database...")
 		dbContext, dbCancelFunc = context.WithCancel(context.Background())
 		connStr := fmt.Sprintf(
-			"user=%s password=%s dbname=%s host=%s port=%s sslmode=disable ",
+			"user=%s password=%s dbname=%s host=%s port=%s sslmode=disable",
 			config.DBUser,
 			config.DBPass,
 			config.DBName,
@@ -61,7 +72,7 @@ func PgSQLInit() (err error) {
 				"DBName": config.DBName,
 				"DBHost": config.DBHost,
 				"DBPort": config.DBPort,
-			}).Error("[Wallet][Init]Unable to connect to database: %v", err)
+			}).Error("[Wallet][PgSQLInit]Unable to connect to database: ", err)
 			return
 		}
 
@@ -102,11 +113,11 @@ func pgCreateAccountTable() error {
 				name character varying(32) NOT NULL,
 				balance double precision NOT NULL DEFAULT 0,
 				currency character varying NOT NULL,
-				CONSTRAINT wallet_pk PRIMARY KEY (id),
-				CONSTRAINT wallet_name UNIQUE (name)
+				CONSTRAINT accounts_pk PRIMARY KEY (id),
+				CONSTRAINT accounts_name UNIQUE (name)
 			);`
 	if _, err := dbPool.Exec(dbContext, sql); err != nil {
-		return errors.New("[Wallet] Can't create table wallet")
+		return fmt.Errorf("[Wallet] Can't create table accounts: %v", err)
 	}
 
 	return nil
@@ -117,18 +128,18 @@ func pgCreatePaymentsTable() error {
 	sql := `CREATE TABLE public.payments
 			(
 				id bigserial NOT NULL,
-				from bigint NULL,
-				to bigint NOT NULL,
+				"from" bigint NULL,
+				"to" bigint NOT NULL,
 				amount double precision NOT NULL DEFAULT 0,
 				date timestamp with time zone NOT NULL DEFAULT now(),
-				CONSTRAINT wallet_pk PRIMARY KEY (id)				
+				CONSTRAINT payments_pk PRIMARY KEY (id)				
 			);
-			CREATE INDEX from_to_idx
+			CREATE INDEX payments_from_to_idx
 				ON public.payments USING btree
-				(from ASC NULLS LAST, to ASC NULLS LAST);
+				("from" ASC NULLS LAST, "to" ASC NULLS LAST);
 			`
 	if _, err := dbPool.Exec(dbContext, sql); err != nil {
-		return errors.New("[Wallet] Can't create table payments")
+		return fmt.Errorf("[Wallet] Can't create table payments: %v", err)
 	}
 	return nil
 }

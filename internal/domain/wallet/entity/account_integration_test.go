@@ -29,9 +29,9 @@ func Test_Create(t *testing.T) {
 			false,
 		},
 		{
-			"with to short name",
+			"with to long name",
 			args{
-				"asf",
+				"asf4566asdkjhsakhkiwhckjashckakjcsdichsidcik",
 				-1,
 			},
 			true,
@@ -46,18 +46,18 @@ func Test_Create(t *testing.T) {
 		},
 	}
 	// create accounts
-	for _, tt := range tests {
+	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a, err := New()
 			if err != nil {
-				t.Fatalf("New() error = %v, wantErr %v ", err, tt.wantErr)
+				t.Fatal("New() error: ", err)
 			}
 			err = a.Register(tt.args.name)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Register() error = %v, wantErr %v ", err, tt.wantErr)
+				t.Errorf("Register() error : %v, wantErr %v ", err, tt.wantErr)
 				return
 			}
-			tt.args.id = a.ID
+			tests[i].args.id = a.ID
 		})
 	}
 
@@ -83,24 +83,31 @@ func Test_Deposit(t *testing.T) {
 	a, err := New()
 	if err != nil {
 		t.Errorf("New() error : %v ", err)
+		t.Fail()
+	}
+	const accName = "testacc"
+
+	t.Log("register new account")
+	err = a.Register(accName)
+	if err != nil {
+		t.Errorf("Register() error : %v ", err)
 	}
 
-	t.Run("register account", func(t *testing.T) {
-		err := a.Register("testacc")
-		if err != nil {
-			t.Errorf("Register() error : %v ", err)
-		}
-	})
+	t.Log("deposit account")
+	if err = a.Find(accName); err != nil {
+		t.Fatal(err)
+	}
 
-	t.Run("deposit account", func(t *testing.T) {
-		tid, err := a.Deposit(1)
-		if err != nil {
-			t.Errorf("Deposit() error : %v ", err)
-		}
+	tid, err := a.Deposit(1)
+	if err != nil {
+		t.Errorf("Deposit() error : %v ", err)
+	}
+	t.Log("payment id: ", tid)
 
-		// TODO
-		// check that payment with id exists
-		_ = tid
-	})
+	_ = a.Delete()
+
+	// TODO
+	// check that payment with id exists
+	_ = tid
 
 }

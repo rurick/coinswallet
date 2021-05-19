@@ -3,8 +3,7 @@ package driver
 import "fmt"
 
 const (
-	accountTableName = "accounts"
-	defaultCurrency  = "usd"
+	defaultCurrency = "usd"
 )
 
 //
@@ -35,10 +34,10 @@ func (pg *PgSqlAccount) Balance() float64 {
 func (pg *PgSqlAccount) Find(name string) error {
 	row := dbPool.QueryRow(dbContext, `
 		SELECT id, name, balance, currency 
-		FROM $1 
+		FROM accounts
 		WHERE 
-			"name" = $2 
-		LIMIT 1`, accountTableName, name)
+			"name" = $1 
+		LIMIT 1`, name)
 	if err := row.Scan(
 		&pg.id, &pg.name, &pg.balance, &pg.currency); err != nil {
 		return err
@@ -51,10 +50,10 @@ func (pg *PgSqlAccount) Find(name string) error {
 func (pg *PgSqlAccount) Get(id int64) error {
 	row := dbPool.QueryRow(dbContext, `
 		SELECT id, name, balance, currency 
-		FROM $1 
+		FROM accounts
 		WHERE 
-			"id" = $2 
-		LIMIT 1`, accountTableName, id)
+			"id" = $1 
+		LIMIT 1`, id)
 	if err := row.Scan(
 		&pg.id, &pg.name, &pg.balance, &pg.currency); err != nil {
 		return err
@@ -70,8 +69,8 @@ func (pg *PgSqlAccount) Deposit(amount float64) (int64, error) {
 	}
 
 	// update balances
-	if _, err = tx.Exec(dbContext, `UPDATE $1 SET balance = balance + $2 WHERE id = $4 LIMIT 1`,
-		accountTableName, amount, pg.id); err != nil {
+	if _, err = tx.Exec(dbContext, `UPDATE accounts SET balance = balance + $1 WHERE id = $2 `,
+		amount, pg.id); err != nil {
 		if e := tx.Rollback(dbContext); e != nil {
 			return 0, e
 		}
@@ -81,8 +80,8 @@ func (pg *PgSqlAccount) Deposit(amount float64) (int64, error) {
 	// create payment
 	var paymentID int64
 	row := tx.QueryRow(dbContext, `
-		INSERT INTO $1 (from, to, amount, date) VALUES(NULL, $2, $3, NOW()) RETURNING id`,
-		paymentTableName, pg.id, amount)
+		INSERT INTO payments ("from", "to", "amount", "date") VALUES(NULL, $1, $2, NOW()) RETURNING id`,
+		pg.id, amount)
 	if err = row.Scan(&paymentID); err != nil {
 		if e := tx.Rollback(dbContext); e != nil {
 			return 0, e
@@ -107,7 +106,7 @@ func (pg *PgSqlAccount) Transfer(toID int64, amount float64) (int64, error) {
 
 	{
 		// reread my balance from database in current transaction
-		me := tx.QueryRow(dbContext, `SELECT balance FROM $1 WHERE "id" = $2 LIMIT 1`, accountTableName, pg.id)
+		me := tx.QueryRow(dbContext, `SELECT balance FROM accounts WHERE "id" = $1 LIMIT 1`, pg.id)
 		if err := me.Scan(&pg.balance); err != nil {
 			return 0, err
 		}
@@ -129,10 +128,10 @@ func (pg *PgSqlAccount) Transfer(toID int64, amount float64) (int64, error) {
 
 	// update balances
 	if _, err = tx.Exec(dbContext, `
-			UPDATE $1 SET balance = balance - $2 WHERE id = $3 LIMIT 1;
-			UPDATE $1 SET balance = balance + $2 WHERE id = $4 LIMIT 1;
+			UPDATE accounts SET balance = balance - $1 WHERE id = $2;
+			UPDATE accounts SET balance = balance + $1 WHERE id = $3;
 			`,
-		accountTableName, amount, pg.id, to.id); err != nil {
+		amount, pg.id, to.id); err != nil {
 		if e := tx.Rollback(dbContext); e != nil {
 			return 0, e
 		}
@@ -142,8 +141,8 @@ func (pg *PgSqlAccount) Transfer(toID int64, amount float64) (int64, error) {
 	// create payment
 	var paymentID int64
 	row := tx.QueryRow(dbContext, `
-		INSERT INTO $1 (from, to, amount, date) VALUES($2, $3, $4, NOW()) RETURNING id`,
-		paymentTableName, pg.id, toID, amount)
+		INSERT INTO payments (from, to, amount, date) VALUES($1, $2, $3, NOW()) RETURNING id`,
+		pg.id, toID, amount)
 	if err = row.Scan(&paymentID); err != nil {
 		if e := tx.Rollback(dbContext); e != nil {
 			return 0, e
@@ -163,11 +162,11 @@ func (pg *PgSqlAccount) Transfer(toID int64, amount float64) (int64, error) {
 // Important! When any fields will be added into table, then need to add one in to INSERT query
 func (pg *PgSqlAccount) Create(name string) error {
 	res := dbPool.QueryRow(dbContext, `
-		INSERT INTO $1 (name, balance, currency) VALUES(
-		$2, $3, $4
+		INSERT INTO accounts (name, balance, currency) VALUES(
+		$1, $2, $3
 		)
 		RETURNING id
-	`, accountTableName, name, 0, defaultCurrency)
+	`, name, 0, defaultCurrency)
 
 	var id int64
 	if err := res.Scan(&id); err != nil {
@@ -182,10 +181,7 @@ func (pg *PgSqlAccount) Create(name string) error {
 
 // Delete - delete wallet account
 func (pg *PgSqlAccount) Delete() error {
-	if _, err := dbPool.Exec(dbContext,
-		`DELETE FROM $1 WHERE id = $2 LIMIT 1`,
-		accountTableName,
-		pg.id); err != nil {
+	if _, err := dbPool.Exec(dbContext, `DELETE FROM accounts WHERE id = $1`, pg.id); err != nil {
 		return err
 	}
 	return nil
@@ -197,11 +193,11 @@ func (pg *PgSqlAccount) Delete() error {
 // if limit = -1, then no limit
 // Important! When any fields will be added into table, then need to add one in to SELECT query
 func (pg *PgSqlAccount) List(offset, limit int64) ([]string, error) {
-	sql := `SELECT name FROM $1 ORDER BY id OFFSET $2`
+	sql := `SELECT name FROM accounts ORDER BY id OFFSET $1`
 	if limit > 0 {
 		sql += fmt.Sprintf(` LIMIT %d`, limit)
 	}
-	rows, err := dbPool.Query(dbContext, sql, accountTableName, offset)
+	rows, err := dbPool.Query(dbContext, sql, offset)
 	if err != nil {
 		return nil, err
 	}

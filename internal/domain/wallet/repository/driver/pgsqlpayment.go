@@ -4,8 +4,6 @@ import (
 	"time"
 )
 
-const paymentTableName = "payments"
-
 //
 // Driver for work with PostgreSQL database
 //
@@ -40,12 +38,12 @@ func (pg *PgSqlPayment) To() int64 {
 func PaymentsList(accountID, offset, limit int64) ([]PgSqlPayment, error) {
 	rows, err := dbPool.Query(dbContext, `
 		SELECT id, from, to, amount, date 
-		FROM $1 
+		FROM payments
 		WHERE
-			from = $2 OR to = $2
+			from = $1 OR to = $1
 		ORDER BY id
-		OFFSET $3
-		LIMIT $4`, paymentTableName, accountID, offset, limit)
+		OFFSET $2
+		LIMIT $3`, accountID, offset, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -70,10 +68,10 @@ func PaymentsList(accountID, offset, limit int64) ([]PgSqlPayment, error) {
 func AllPaymentsList(offset, limit int64) ([]PgSqlPayment, error) {
 	rows, err := dbPool.Query(dbContext, `
 		SELECT id, from, to, amount, date 
-		FROM $1 
+		FROM payments
 		ORDER BY id
-		OFFSET $3
-		LIMIT $4`, paymentTableName, offset, limit)
+		OFFSET $1
+		LIMIT $2`, offset, limit)
 	if err != nil {
 		return nil, err
 	}

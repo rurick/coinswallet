@@ -18,6 +18,8 @@ type Account interface {
 	Name() string
 	// Balance return balance of wallet
 	Balance() float64
+	// Currency return currency of wallet
+	Currency() string
 
 	// Find instance of wallet by account name
 	Find(name string) error

@@ -36,6 +36,10 @@ type Account struct {
 // Register - Create a new wallet account with zero balance
 func (a *Account) Register(name AccountName) (err error) {
 	err = a.rep.Create(string(name))
+	a.ID = AccountID(a.rep.ID())
+	a.Name = AccountName(a.rep.Name())
+	a.Balance = a.rep.Balance()
+	a.Currency = a.rep.Currency()
 	return
 }
 
