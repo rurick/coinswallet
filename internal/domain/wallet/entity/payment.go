@@ -20,3 +20,53 @@ type Payment struct {
 	// pointer to implementation of model
 	rep repository.Payment
 }
+
+//
+// NewPayment - create new instance of Payment
+func NewPayment() (*Payment, error) {
+	const dbDriver = "postgresql"
+
+	rep, err := repository.PaymentFactory(dbDriver)
+	if err != nil {
+		return nil, err
+	}
+	return &Payment{
+		rep: rep,
+	}, nil
+}
+
+// PaymentsList - return list of all payments.
+// payments listed ordering by id
+// offset and limit are using for set slice bound of list
+// if limit = -1, then no limit
+// if account is nil returning list of all accounts
+func PaymentsList(account *Account, offset, limit int64) ([]Payment, error) {
+	p, err := NewPayment()
+	if err != nil {
+		return nil, err
+	}
+	lst := []interface{}{}
+	if account == nil {
+		if lst, err = p.rep.ListAll(offset, limit); err != nil {
+			return nil, err
+		}
+	} else {
+		if lst, err = p.rep.List(int64(account.ID), offset, limit); err != nil {
+			return nil, err
+		}
+	}
+
+	var res []Payment
+	for _, n := range lst {
+		rp := n.(repository.Payment)
+		p := Payment{
+			ID:     ID(rp.ID()),
+			Date:   rp.Date(),
+			Amount: rp.Amount(),
+			FromID: rp.From(),
+			ToID:   rp.To(),
+		}
+		res = append(res, p)
+	}
+	return res, nil
+}

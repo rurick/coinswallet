@@ -75,7 +75,7 @@ func (a *Account) Get(id AccountID) (err error) {
 func (a *Account) Transfer(toName AccountName, amount float64) (id int64, err error) {
 	var to *Account
 
-	if to, err = New(); err != nil {
+	if to, err = NewAccount(); err != nil {
 		return
 	}
 	if err = to.Find(toName); err != nil {
@@ -115,15 +115,15 @@ func (a *Account) List(offset, limit int64) ([]AccountName, error) {
 // load data from model to Account
 func (a *Account) load() (err error) {
 	if a.rep == nil {
-		return errors.New("create new instance calling New() method first")
+		return errors.New("create new instance calling NewAccount() method first")
 	}
 	err = a.Get(a.ID)
 	return
 }
 
 //
-// New - create new instance of Account
-func New() (*Account, error) {
+// NewAccount - create new instance of Account
+func NewAccount() (*Account, error) {
 	const dbDriver = "postgresql"
 
 	rep, err := repository.AccountFactory(dbDriver)

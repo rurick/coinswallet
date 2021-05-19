@@ -194,7 +194,7 @@ func (pg *PgSqlAccount) Delete() error {
 // Important! When any fields will be added into table, then need to add one in to SELECT query
 func (pg *PgSqlAccount) List(offset, limit int64) ([]string, error) {
 	sql := `SELECT name FROM accounts ORDER BY id OFFSET $1`
-	if limit > 0 {
+	if limit >= 0 {
 		sql += fmt.Sprintf(` LIMIT %d`, limit)
 	}
 	rows, err := dbPool.Query(dbContext, sql, offset)

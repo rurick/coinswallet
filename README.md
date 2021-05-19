@@ -1,6 +1,7 @@
 #Simple Coins Wallet
 
 It's a simple project provide generic wallet service with a REST API
+Using domain driven design
 
 User Stories:
 * I want to create an account

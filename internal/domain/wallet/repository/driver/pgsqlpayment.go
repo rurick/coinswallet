@@ -1,6 +1,7 @@
 package driver
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -31,25 +32,30 @@ func (pg *PgSqlPayment) To() int64 {
 	return pg.toID
 }
 
-// PaymentsList - return list of payments for account with accountID
+// List - return list of payments for account with accountID
 // payments listed ordering by id
 // offset and limit are using for set slice bound of list
+// if limit = -1, then no limit
 // Important! When any fields will be added into table, then need to add one in to SELECT query
-func PaymentsList(accountID, offset, limit int64) ([]PgSqlPayment, error) {
-	rows, err := dbPool.Query(dbContext, `
+func (pg *PgSqlPayment) List(accountID, offset, limit int64) ([]interface{}, error) {
+	sql := `
 		SELECT id, from, to, amount, date 
 		FROM payments
 		WHERE
 			from = $1 OR to = $1
 		ORDER BY id
-		OFFSET $2
-		LIMIT $3`, accountID, offset, limit)
+		OFFSET $2`
+	if limit >= 0 {
+		sql += fmt.Sprintf(` LIMIT %d`, limit)
+	}
+
+	rows, err := dbPool.Query(dbContext, sql, accountID, offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var res []PgSqlPayment
+	var res []interface{}
 	for rows.Next() {
 		pg := PgSqlPayment{}
 		if err := rows.Scan(
@@ -61,23 +67,29 @@ func PaymentsList(accountID, offset, limit int64) ([]PgSqlPayment, error) {
 	return res, nil
 }
 
-// AllPaymentsList - return list of payments
+// ListAll - return list of payments
 // payments listed ordering by id
 // offset and limit are using for set slice bound of list
+// if limit = -1, then no limit
 // Important! When any fields will be added into table, then need to add one in to SELECT query
-func AllPaymentsList(offset, limit int64) ([]PgSqlPayment, error) {
-	rows, err := dbPool.Query(dbContext, `
+func (pg *PgSqlPayment) ListAll(offset, limit int64) ([]interface{}, error) {
+	sql := `
 		SELECT id, from, to, amount, date 
 		FROM payments
 		ORDER BY id
-		OFFSET $1
-		LIMIT $2`, offset, limit)
+		OFFSET $1`
+	if limit >= 0 {
+		sql += fmt.Sprintf(` LIMIT %d`, limit)
+	}
+
+	rows, err := dbPool.Query(dbContext, sql, offset)
+
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var res []PgSqlPayment
+	var res []interface{}
 	for rows.Next() {
 		pg := PgSqlPayment{}
 		if err := rows.Scan(

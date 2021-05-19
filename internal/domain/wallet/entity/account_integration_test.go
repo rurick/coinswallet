@@ -48,9 +48,9 @@ func Test_Create(t *testing.T) {
 	// create accounts
 	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			a, err := New()
+			a, err := NewAccount()
 			if err != nil {
-				t.Fatal("New() error: ", err)
+				t.Fatal("NewAccount() error: ", err)
 			}
 			err = a.Register(tt.args.name)
 			if (err != nil) != tt.wantErr {
@@ -63,9 +63,9 @@ func Test_Create(t *testing.T) {
 
 	// delete created accounts
 	t.Run("delete existing accounts", func(t *testing.T) {
-		a, err := New()
+		a, err := NewAccount()
 		if err != nil {
-			t.Fatalf("New() error = %v", err)
+			t.Fatalf("NewAccount() error = %v", err)
 		}
 		err = a.Get(tests[0].args.id)
 		if err != nil {
@@ -80,9 +80,9 @@ func Test_Create(t *testing.T) {
 }
 
 func Test_Deposit(t *testing.T) {
-	a, err := New()
+	a, err := NewAccount()
 	if err != nil {
-		t.Errorf("New() error : %v ", err)
+		t.Errorf("NewAccount() error : %v ", err)
 		t.Fail()
 	}
 	const accName = "testacc"

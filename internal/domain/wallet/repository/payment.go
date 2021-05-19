@@ -23,6 +23,11 @@ type Payment interface {
 	From() int64
 	// To return recipient account id
 	To() int64
+
+	// List - return list of payments for account with accountID
+	List(accountID, offset, limit int64) ([]interface{}, error)
+	// ListAll - return list of all payments
+	ListAll(offset, limit int64) ([]interface{}, error)
 }
 
 // create repository instance using current DBEngine
