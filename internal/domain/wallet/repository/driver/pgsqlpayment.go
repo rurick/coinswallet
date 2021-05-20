@@ -65,8 +65,10 @@ func (pg PgSqlPayment) List(accountID, offset, limit int64) ([]interface{}, erro
 
 	// try to get list from cache.
 	cacheKey := pg._cacheListKey(accountID)
-	if v, ok := cache.Get(cacheKey); ok {
-		return v.([]interface{}), nil
+	if maySaveToCache(accountID, offset, limit) {
+		if v, ok := cache.Get(cacheKey); ok {
+			return v.([]interface{}), nil
+		}
 	}
 
 	sql := `
@@ -95,7 +97,9 @@ func (pg PgSqlPayment) List(accountID, offset, limit int64) ([]interface{}, erro
 		}
 		res = append(res, pg)
 	}
-	cache.Set(cacheKey, res, 0)
+	if maySaveToCache(accountID, offset, limit) {
+		cache.Set(cacheKey, res, 0)
+	}
 	return res, nil
 }
 
@@ -108,8 +112,10 @@ func (pg PgSqlPayment) ListAll(offset, limit int64) ([]interface{}, error) {
 
 	// try to get list from cache. For list of all payments used cacheKey for accountID=-1
 	cacheKey := pg._cacheListKey(-1)
-	if v, ok := cache.Get(cacheKey); ok {
-		return v.([]interface{}), nil
+	if maySaveToCache(-1, offset, limit) {
+		if v, ok := cache.Get(cacheKey); ok {
+			return v.([]interface{}), nil
+		}
 	}
 
 	sql := `
@@ -136,7 +142,9 @@ func (pg PgSqlPayment) ListAll(offset, limit int64) ([]interface{}, error) {
 		}
 		res = append(res, p)
 	}
-	cache.Set(cacheKey, res, 0)
+	if maySaveToCache(-1, offset, limit) {
+		cache.Set(cacheKey, res, 0)
+	}
 	return res, nil
 }
 
@@ -148,4 +156,9 @@ func (pg PgSqlPayment) _cacheKey(id int64) string {
 // generate key for list in memory cache
 func (pg PgSqlPayment) _cacheListKey(accountID int64) string {
 	return fmt.Sprintf("List%d", accountID)
+}
+
+//
+func maySaveToCache(id, o, l int64) bool {
+	return o == 0 && l == -1
 }

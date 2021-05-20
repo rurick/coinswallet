@@ -11,25 +11,50 @@ POST http://localhost:8081/account/
 content-type: application/json
 
 {
-  "name": "mywallaet152"
+  "name": "kwefge2if428g"
 }
 
 ###
 
-POST http://localhost:8081/account/deposit/
+PATCH http://localhost:8081/account/deposit/
 content-type: application/json
 
 {
-  "name": "mywallaet152"
-  "amount":3.2
+  "name": "mywallet152",
+  "amount":3.2314511
 }
 
 ###
 
-POST http://localhost:8081/account/deposit/
+PATCH http://localhost:8081/account/deposit/
 content-type: application/json
 
 {
-  "name": "mywallaet152"
+  "name": "mywallet152",
   "amount":-2
 }
+###
+
+PATCH http://localhost:8081/account/transfer/
+content-type: application/json
+
+{
+  "from": "mywallet152",
+  "to": "kwefge2if428g",
+  "amount":2
+}
+
+###
+
+GET http://localhost:8081/accounts/0/-1/
+content-type: application/json
+
+###
+
+GET http://localhost:8081/payments/5/-1/
+content-type: application/json
+
+###
+
+GET http://localhost:8081/payments/mywallet152/2/-1/
+content-type: application/json

@@ -99,6 +99,9 @@ func (a *Account) Transfer(toName AccountName, amount float64) (paymentID int64,
 // returning id of payment
 func (a *Account) Deposit(amount float64) (paymentID int64, err error) {
 	paymentID, err = a.rep.Deposit(amount)
+	if err == nil {
+		a.load()
+	}
 	return
 }
 

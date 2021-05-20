@@ -158,7 +158,7 @@ func pgCreateAccountTable() error {
 			(
 				id bigserial NOT NULL,
 				name character varying(32) NOT NULL,
-				balance double precision NOT NULL DEFAULT 0,
+				balance numeric(22,4) NOT NULL DEFAULT 0,
 				currency character varying NOT NULL,
 				CONSTRAINT accounts_pk PRIMARY KEY (id),
 				CONSTRAINT accounts_name UNIQUE (name)
@@ -177,7 +177,7 @@ func pgCreatePaymentsTable() error {
 				id bigserial NOT NULL,
 				"from" bigint NOT NULL,
 				"to" bigint NOT NULL,
-				amount double precision NOT NULL DEFAULT 0,
+				"amount" numeric(22,4) NOT NULL DEFAULT 0,
 				date timestamp with time zone NOT NULL DEFAULT now(),
 				CONSTRAINT payments_pk PRIMARY KEY (id)				
 			);

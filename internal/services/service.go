@@ -54,6 +54,7 @@ var (
 
 	ErrCreateAccountInvalidName = errors.New("invalid name format")
 	ErrCreateAccount            = errors.New("create account error")
+	ErrCreateAccountDuplicate   = errors.New("create account error: duplicate name")
 
 	ErrDepositNotFound    = errors.New("account not found")
 	ErrDepositAmountError = errors.New("error in amount value")
@@ -61,6 +62,7 @@ var (
 	ErrTransferFromNotFound = errors.New("from account not found")
 	ErrTransferToNotFound   = errors.New("to account not found")
 	ErrTransferAmountError  = errors.New("error in amount value")
+	ErrTransferNoMoneyError = errors.New("no enough money")
 
 	ErrPaymentsListNotFound         = errors.New("account not found")
 	ErrPaymentsListOffsetLimitError = errors.New("error in offset, limit params")
@@ -80,6 +82,9 @@ func (s Service) CreateAccount(ctx context.Context, name entity.AccountName) (en
 	}
 	if err = a.Register(name); err != nil {
 		_ = s.logger.Log("service", "CreateAccount", "func", "Register()", "error", err)
+		if a.Find(name) != err { // duplicate
+			return 0, ErrCreateAccountDuplicate
+		}
 		return 0, ErrCreateAccount
 	}
 	return a.ID, nil
@@ -124,6 +129,11 @@ func (s Service) Transfer(ctx context.Context, from entity.AccountName, to entit
 	if amount <= 0 {
 		return 0, ErrTransferAmountError
 	}
+
+	if aFrom.Balance < amount {
+		return 0, ErrTransferNoMoneyError
+	}
+
 	var txID int64
 	if txID, err = aFrom.Transfer(to, amount); err != nil {
 		_ = s.logger.Log("service", "Transfer", "func", "Transfer()", "error", err)

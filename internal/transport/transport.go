@@ -34,7 +34,7 @@ func MakeHTTPHandler(s services.Service, logger log.Logger) http.Handler {
 	// PATCH 	/account/deposit/				deposit amount of currency to the wallet account
 	// PATCH 	/account/transfer/				send amount of currency between two wallet accounts
 	// GET	 	/accounts/:offset/:limit/		list of all registered accounts
-	// GET	 	/payments/:name:offset/:limit/	list of payments of the account
+	// GET	 	/payments/:name:/offset/:limit/	list of payments of the account
 	// GET	 	/payments/:offset/:limit/		list of all payments
 
 	r.Methods("POST").Path("/account/").Handler(httptransport.NewServer(
@@ -44,31 +44,31 @@ func MakeHTTPHandler(s services.Service, logger log.Logger) http.Handler {
 		options...,
 	))
 	r.Methods("PATCH").Path("/account/deposit/").Handler(httptransport.NewServer(
-		e.CreateAccount,
+		e.Deposit,
 		decodeDeposit,
 		encodeResponse,
 		options...,
 	))
 	r.Methods("PATCH").Path("/account/transfer/").Handler(httptransport.NewServer(
-		e.CreateAccount,
+		e.Transfer,
 		decodeTransfer,
 		encodeResponse,
 		options...,
 	))
 	r.Methods("GET").Path("/payments/{name}/{offset}/{limit}/").Handler(httptransport.NewServer(
-		e.CreateAccount,
+		e.PaymentsList,
 		decodePaymentsList,
 		encodeResponse,
 		options...,
 	))
 	r.Methods("GET").Path("/payments/{offset}/{limit}/").Handler(httptransport.NewServer(
-		e.CreateAccount,
+		e.AllPaymentsList,
 		decodeAllPaymentsList,
 		encodeResponse,
 		options...,
 	))
 	r.Methods("GET").Path("/accounts/{offset}/{limit}/").Handler(httptransport.NewServer(
-		e.CreateAccount,
+		e.AccountsList,
 		decodeAccountsList,
 		encodeResponse,
 		options...,
@@ -179,10 +179,10 @@ func decodeAccountsList(_ context.Context, r *http.Request) (request interface{}
 // reason to provide anything more specific. It's certainly possible to
 // specialize on a per-response (per-method) basis.
 func encodeResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
-	if e, ok := response.(errorer); ok && e.error() != nil {
+	if e, ok := response.(errorer); ok && e.Error() != nil {
 		// Not a Go kit transport error, but a business-logic error.
 		// Provide those as HTTP errors.
-		encodeError(ctx, e.error(), w)
+		encodeError(ctx, e.Error(), w)
 		return nil
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -190,7 +190,7 @@ func encodeResponse(ctx context.Context, w http.ResponseWriter, response interfa
 }
 
 type errorer interface {
-	error() error
+	Error() error
 }
 
 // encode errors from business-logic

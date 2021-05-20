@@ -95,8 +95,7 @@ func (pg *PgSqlAccount) Deposit(amount float64) (int64, error) {
 		return 0, err
 	}
 
-	// on success update object pg
-	pg.balance += amount
+	_ = pg.Get(pg.id) //reread from db
 
 	return paymentID, nil
 }
@@ -166,8 +165,7 @@ func (pg *PgSqlAccount) Transfer(toID int64, amount float64) (int64, error) {
 		return 0, err
 	}
 
-	// on success update object pg
-	pg.balance -= amount
+	_ = pg.Get(pg.id) //reread from db
 
 	return paymentID, nil
 }
