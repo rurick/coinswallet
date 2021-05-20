@@ -27,7 +27,7 @@ func New() *Goroutines {
 
 	// initialisation of Done channel
 	g.onceNew.Do(func() {
-		g.done = make(chan bool, 1)
+		g.done = make(chan bool)
 	})
 
 	g.Lock()
@@ -83,6 +83,6 @@ func (g *Goroutines) Len() int {
 // closeChan close channel done one time
 func (g *Goroutines) closeChan() {
 	g.onceClose.Do(func() {
-		g.done <- true
+		close(g.done)
 	})
 }

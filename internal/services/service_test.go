@@ -5,7 +5,7 @@
 // for successfully test passed run it from directory where file .env is
 // or set up the ENV in your OS environment
 
-package service
+package services
 
 import (
 	"context"
@@ -29,9 +29,9 @@ func Test_CreateAccount(t *testing.T) {
 	const invalidAccName = "Testing987ha9 871hgaf98782"
 	initLogger()
 
-	srv := newService(logger)
+	srv := NewService(logger)
 	t.Run("with valid account name", func(t *testing.T) {
-		if err := srv.CreateAccount(context.Background(), validAccName); err != nil {
+		if _, err := srv.CreateAccount(context.Background(), validAccName); err != nil {
 			t.Error(err)
 		}
 		// delete account
@@ -43,7 +43,7 @@ func Test_CreateAccount(t *testing.T) {
 		_ = a.Delete()
 	})
 	t.Run("with invalid account name", func(t *testing.T) {
-		if err := srv.CreateAccount(context.Background(), invalidAccName); err == nil {
+		if _, err := srv.CreateAccount(context.Background(), invalidAccName); err == nil {
 			t.Error("wait error but not")
 		}
 	})
@@ -57,7 +57,7 @@ func Test_Deposit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	srv := newService(logger)
+	srv := NewService(logger)
 
 	t.Run("create temp account", func(t *testing.T) {
 		if err := a.Register(validAccName); err != nil {
@@ -65,7 +65,7 @@ func Test_Deposit(t *testing.T) {
 		}
 	})
 	t.Run("run service ", func(t *testing.T) {
-		if err := srv.Deposit(context.Background(), validAccName, 3); err != nil {
+		if _, err := srv.Deposit(context.Background(), validAccName, 3); err != nil {
 			t.Error(err)
 		}
 	})
@@ -86,7 +86,7 @@ func Test_Transfer(t *testing.T) {
 		t.Fatal(err)
 	}
 	a2, err := entity.NewAccount()
-	srv := newService(logger)
+	srv := NewService(logger)
 
 	t.Run("create temp account 1", func(t *testing.T) {
 		if err := a1.Register(validAccName1); err != nil {
@@ -99,12 +99,12 @@ func Test_Transfer(t *testing.T) {
 		}
 	})
 	t.Run("deposit ", func(t *testing.T) {
-		if err := srv.Deposit(context.Background(), validAccName1, 2); err != nil {
+		if _, err := srv.Deposit(context.Background(), validAccName1, 2); err != nil {
 			t.Error(err)
 		}
 	})
 	t.Run("run service ", func(t *testing.T) {
-		if err := srv.Transfer(context.Background(), validAccName1, validAccName2, 1); err != nil {
+		if _, err := srv.Transfer(context.Background(), validAccName1, validAccName2, 1); err != nil {
 			t.Error(err)
 		}
 		_ = a1.Find(validAccName1)
@@ -132,7 +132,7 @@ func Test_PaymentsList(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	srv := newService(logger)
+	srv := NewService(logger)
 
 	t.Run("create temp account", func(t *testing.T) {
 		if err := a.Register(validAccName); err != nil {
@@ -140,7 +140,7 @@ func Test_PaymentsList(t *testing.T) {
 		}
 	})
 	t.Run("deposit ", func(t *testing.T) {
-		if err := srv.Deposit(context.Background(), validAccName, 6); err != nil {
+		if _, err := srv.Deposit(context.Background(), validAccName, 6); err != nil {
 			t.Error(err)
 		}
 	})
@@ -164,7 +164,7 @@ func Test_PaymentsList(t *testing.T) {
 func Test_AllPaymentsList(t *testing.T) {
 	initLogger()
 
-	srv := newService(logger)
+	srv := NewService(logger)
 
 	t.Run("run service ", func(t *testing.T) {
 		if _, err := srv.AllPaymentsList(context.Background(), 0, -1); err != nil {
@@ -176,7 +176,7 @@ func Test_AllPaymentsList(t *testing.T) {
 func Test_AccountsList(t *testing.T) {
 	initLogger()
 
-	srv := newService(logger)
+	srv := NewService(logger)
 
 	t.Run("run service ", func(t *testing.T) {
 		if _, err := srv.AccountsList(context.Background(), 0, -1); err != nil {

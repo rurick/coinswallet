@@ -1,0 +1,35 @@
+POST http://localhost:8081/account/
+content-type: application/json
+
+{
+  "name": "mywallet152"
+}
+
+###
+
+POST http://localhost:8081/account/
+content-type: application/json
+
+{
+  "name": "mywallaet152"
+}
+
+###
+
+POST http://localhost:8081/account/deposit/
+content-type: application/json
+
+{
+  "name": "mywallaet152"
+  "amount":3.2
+}
+
+###
+
+POST http://localhost:8081/account/deposit/
+content-type: application/json
+
+{
+  "name": "mywallaet152"
+  "amount":-2
+}

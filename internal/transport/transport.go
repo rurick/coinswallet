@@ -1,15 +1,15 @@
 package transport
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"net/http"
+	"strconv"
 
+	"coinswallet/internal/domain/wallet/entity"
 	"coinswallet/internal/endpoints"
-	"coinswallet/internal/service"
+	"coinswallet/internal/services"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/transport"
 	httptransport "github.com/go-kit/kit/transport/http"
@@ -22,7 +22,7 @@ var (
 	ErrBadRouting = errors.New("inconsistent mapping between route and handler (programmer error)")
 )
 
-func MakeHTTPHandler(s service.Service, logger log.Logger) http.Handler {
+func MakeHTTPHandler(s services.Service, logger log.Logger) http.Handler {
 	r := mux.NewRouter()
 	e := endpoints.MakeEndpoints(s)
 	options := []httptransport.ServerOption{
@@ -31,27 +31,169 @@ func MakeHTTPHandler(s service.Service, logger log.Logger) http.Handler {
 	}
 
 	// POST 	/account/						create new wallet account
-	// PATCH 	/account/:name/deposit/			deposit amount of currency to the wallet account
-	// PATCH 	/account/:name/transfer/		send amount of currency between two wallet accounts
-	// GET	 	/accounts/						list of all registered accounts
-	// GET	 	/payments/:name					list of payments of the account
-	// GET	 	/payments/						list of all payments
+	// PATCH 	/account/deposit/				deposit amount of currency to the wallet account
+	// PATCH 	/account/transfer/				send amount of currency between two wallet accounts
+	// GET	 	/accounts/:offset/:limit/		list of all registered accounts
+	// GET	 	/payments/:name:offset/:limit/	list of payments of the account
+	// GET	 	/payments/:offset/:limit/		list of all payments
+
+	r.Methods("POST").Path("/account/").Handler(httptransport.NewServer(
+		e.CreateAccount,
+		decodeCreateAccount,
+		encodeResponse,
+		options...,
+	))
+	r.Methods("PATCH").Path("/account/deposit/").Handler(httptransport.NewServer(
+		e.CreateAccount,
+		decodeDeposit,
+		encodeResponse,
+		options...,
+	))
+	r.Methods("PATCH").Path("/account/transfer/").Handler(httptransport.NewServer(
+		e.CreateAccount,
+		decodeTransfer,
+		encodeResponse,
+		options...,
+	))
+	r.Methods("GET").Path("/payments/{name}/{offset}/{limit}/").Handler(httptransport.NewServer(
+		e.CreateAccount,
+		decodePaymentsList,
+		encodeResponse,
+		options...,
+	))
+	r.Methods("GET").Path("/payments/{offset}/{limit}/").Handler(httptransport.NewServer(
+		e.CreateAccount,
+		decodeAllPaymentsList,
+		encodeResponse,
+		options...,
+	))
+	r.Methods("GET").Path("/accounts/{offset}/{limit}/").Handler(httptransport.NewServer(
+		e.CreateAccount,
+		decodeAccountsList,
+		encodeResponse,
+		options...,
+	))
 	return r
 }
 
-// encodeRequest likewise JSON-encodes the request to the HTTP request body.
-// Don't use it directly as a transport/http.Client EncodeRequestFunc:
-// endpoints require mutating the HTTP method and request path.
-func encodeRequest(_ context.Context, req *http.Request, request interface{}) error {
-	var buf bytes.Buffer
-	err := json.NewEncoder(&buf).Encode(request)
-	if err != nil {
-		return err
+func decodeCreateAccount(_ context.Context, r *http.Request) (request interface{}, err error) {
+	var req endpoints.CreateAccountRequest
+	if e := json.NewDecoder(r.Body).Decode(&req); e != nil {
+		return nil, e
 	}
-	req.Body = ioutil.NopCloser(&buf)
-	return nil
+	return req, nil
 }
 
+func decodeDeposit(_ context.Context, r *http.Request) (request interface{}, err error) {
+	var req endpoints.DepositRequest
+	if e := json.NewDecoder(r.Body).Decode(&req); e != nil {
+		return nil, e
+	}
+	return req, nil
+}
+
+func decodeTransfer(_ context.Context, r *http.Request) (request interface{}, err error) {
+	var req endpoints.TransferRequest
+	if e := json.NewDecoder(r.Body).Decode(&req); e != nil {
+		return nil, e
+	}
+	return req, nil
+}
+
+func decodePaymentsList(_ context.Context, r *http.Request) (request interface{}, err error) {
+	vars := mux.Vars(r)
+	name, ok := vars["name"]
+	if !ok {
+		return nil, ErrBadRouting
+	}
+
+	o, ok := vars["offset"]
+	if !ok {
+		return nil, ErrBadRouting
+	}
+	offset, e := strconv.ParseInt(o, 10, 64)
+	if e != nil {
+		return nil, ErrBadRouting
+	}
+
+	l, ok := vars["limit"]
+	if !ok {
+		return nil, ErrBadRouting
+	}
+	limit, e := strconv.ParseInt(l, 10, 64)
+	if e != nil {
+		return nil, ErrBadRouting
+	}
+
+	return endpoints.PaymentsListRequest{Name: entity.AccountName(name), Offset: offset, Limit: limit}, nil
+}
+
+func decodeAllPaymentsList(_ context.Context, r *http.Request) (request interface{}, err error) {
+	vars := mux.Vars(r)
+	o, ok := vars["offset"]
+	if !ok {
+		return nil, ErrBadRouting
+	}
+	offset, e := strconv.ParseInt(o, 10, 64)
+	if e != nil {
+		return nil, ErrBadRouting
+	}
+
+	l, ok := vars["limit"]
+	if !ok {
+		return nil, ErrBadRouting
+	}
+	limit, e := strconv.ParseInt(l, 10, 64)
+	if e != nil {
+		return nil, ErrBadRouting
+	}
+
+	return endpoints.AllPaymentsListRequest{Offset: offset, Limit: limit}, nil
+}
+
+func decodeAccountsList(_ context.Context, r *http.Request) (request interface{}, err error) {
+	vars := mux.Vars(r)
+	o, ok := vars["offset"]
+	if !ok {
+		return nil, ErrBadRouting
+	}
+	offset, e := strconv.ParseInt(o, 10, 64)
+	if e != nil {
+		return nil, ErrBadRouting
+	}
+
+	l, ok := vars["limit"]
+	if !ok {
+		return nil, ErrBadRouting
+	}
+	limit, e := strconv.ParseInt(l, 10, 64)
+	if e != nil {
+		return nil, ErrBadRouting
+	}
+
+	return endpoints.AccountsListRequest{Offset: offset, Limit: limit}, nil
+}
+
+// encodeResponse is the common method to encode all response types to the
+// client. I chose to do it this way because, since we're using JSON, there's no
+// reason to provide anything more specific. It's certainly possible to
+// specialize on a per-response (per-method) basis.
+func encodeResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	if e, ok := response.(errorer); ok && e.error() != nil {
+		// Not a Go kit transport error, but a business-logic error.
+		// Provide those as HTTP errors.
+		encodeError(ctx, e.error(), w)
+		return nil
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	return json.NewEncoder(w).Encode(response)
+}
+
+type errorer interface {
+	error() error
+}
+
+// encode errors from business-logic
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	if err == nil {
 		panic("encodeError with nil error")
@@ -65,19 +207,19 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 
 func codeFrom(err error) int {
 	switch err {
-	case service.ErrDepositNotFound,
-		service.ErrTransferFromNotFound,
-		service.ErrTransferToNotFound,
-		service.ErrPaymentsListNotFound:
+	case services.ErrDepositNotFound,
+		services.ErrTransferFromNotFound,
+		services.ErrTransferToNotFound,
+		services.ErrPaymentsListNotFound:
 
 		return http.StatusNotFound
 
-	case service.ErrCreateAccountInvalidName,
-		service.ErrCreateAccount,
-		service.ErrDepositAmountError,
-		service.ErrTransferAmountError,
-		service.ErrPaymentsListOffsetLimitError,
-		service.ErrAccountsListOffsetLimitError:
+	case services.ErrCreateAccountInvalidName,
+		services.ErrCreateAccount,
+		services.ErrDepositAmountError,
+		services.ErrTransferAmountError,
+		services.ErrPaymentsListOffsetLimitError,
+		services.ErrAccountsListOffsetLimitError:
 
 		return http.StatusBadRequest
 

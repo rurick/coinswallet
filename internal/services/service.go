@@ -1,16 +1,17 @@
 // Copyright 2021 (c) Yuriy Iovkov aka Rurick.
 // yuriyiovkov@gmail.com; telegram: @yuriyiovkov
 
-package service
+package services
 
 import (
-	"coinswallet/internal/domain/wallet/entity"
 	"context"
 	"errors"
+
+	"coinswallet/internal/domain/wallet/entity"
 	"github.com/go-kit/kit/log"
 )
 
-type Service interface {
+type Services interface {
 
 	// CreateAccount -  create new wallet account
 	CreateAccount(ctx context.Context, name entity.AccountName) error
@@ -37,12 +38,12 @@ type Service interface {
 	AccountsList(ctx context.Context, offset, limit int64) ([]entity.AccountName, error)
 }
 
-type service struct {
+type Service struct {
 	logger log.Logger
 }
 
-func newService(logger log.Logger) service {
-	s := service{
+func NewService(logger log.Logger) Service {
+	s := Service{
 		logger,
 	}
 	return s
@@ -67,70 +68,71 @@ var (
 	ErrAccountsListOffsetLimitError = errors.New("error in offset, limit params")
 )
 
-func (s service) CreateAccount(ctx context.Context, name entity.AccountName) error {
+func (s Service) CreateAccount(ctx context.Context, name entity.AccountName) (entity.AccountID, error) {
 	a, err := entity.NewAccount()
 	if err != nil {
 		_ = s.logger.Log("service", "CreateAccount", "func", "NewAccount()", "error", err)
-		return ErrInService
+		return 0, ErrInService
 	}
 	if err = a.Validate(name); err != nil {
 		_ = s.logger.Log("service", "CreateAccount", "func", "Validate()", "error", err)
-		return ErrCreateAccountInvalidName
+		return 0, ErrCreateAccountInvalidName
 	}
 	if err = a.Register(name); err != nil {
 		_ = s.logger.Log("service", "CreateAccount", "func", "Register()", "error", err)
-		return ErrCreateAccount
+		return 0, ErrCreateAccount
 	}
-	return nil
+	return a.ID, nil
 }
 
-func (s service) Deposit(ctx context.Context, name entity.AccountName, amount float64) error {
+func (s Service) Deposit(ctx context.Context, name entity.AccountName, amount float64) (float64, error) {
 	a, err := entity.NewAccount()
 	if err != nil {
 		_ = s.logger.Log("service", "Deposit", "func", "NewAccount()", "error", err)
-		return ErrInService
+		return 0, ErrInService
 	}
 	if err = a.Find(name); err != nil {
 		_ = s.logger.Log("service", "Deposit", "func", "Find()", "error", err)
-		return ErrDepositNotFound
+		return 0, ErrDepositNotFound
 	}
 	if amount <= 0 {
-		return ErrDepositAmountError
+		return 0, ErrDepositAmountError
 	}
 	if _, err = a.Deposit(amount); err != nil {
 		_ = s.logger.Log("service", "Deposit", "func", "Deposit()", "error", err)
-		return ErrInService
+		return 0, ErrInService
 	}
-	return nil
+	return a.Balance, nil
 
 }
 
-func (s service) Transfer(ctx context.Context, from entity.AccountName, to entity.AccountName, amount float64) error {
+func (s Service) Transfer(ctx context.Context, from entity.AccountName, to entity.AccountName, amount float64) (entity.ID, error) {
 	aFrom, err := entity.NewAccount()
 	aTo, _ := entity.NewAccount()
 	if err != nil {
 		_ = s.logger.Log("service", "Transfer", "func", "NewAccount()", "error", err)
-		return ErrInService
+		return 0, ErrInService
 	}
 	if err = aFrom.Find(from); err != nil {
 		_ = s.logger.Log("service", "Transfer", "func", "Find()", "error", err)
-		return ErrTransferFromNotFound
+		return 0, ErrTransferFromNotFound
 	}
 	if err = aTo.Find(to); err != nil {
 		_ = s.logger.Log("service", "Transfer", "func", "Find()", "error", err)
-		return ErrTransferToNotFound
+		return 0, ErrTransferToNotFound
 	}
 	if amount <= 0 {
-		return ErrTransferAmountError
+		return 0, ErrTransferAmountError
 	}
-	if _, err = aFrom.Transfer(to, amount); err != nil {
+	var txID int64
+	if txID, err = aFrom.Transfer(to, amount); err != nil {
 		_ = s.logger.Log("service", "Transfer", "func", "Transfer()", "error", err)
-		return ErrInService
+		return 0, ErrInService
 	}
-	return nil
+	return entity.ID(txID), nil
 }
 
-func (s service) PaymentsList(ctx context.Context, name entity.AccountName, offset, limit int64) ([]entity.Payment, error) {
+func (s Service) PaymentsList(ctx context.Context, name entity.AccountName, offset, limit int64) ([]entity.Payment, error) {
 	a, err := entity.NewAccount()
 	if err != nil {
 		_ = s.logger.Log("service", "PaymentsList", "func", "NewAccount()", "error", err)
@@ -153,7 +155,7 @@ func (s service) PaymentsList(ctx context.Context, name entity.AccountName, offs
 	return lst, nil
 }
 
-func (s service) AllPaymentsList(ctx context.Context, offset, limit int64) ([]entity.Payment, error) {
+func (s Service) AllPaymentsList(ctx context.Context, offset, limit int64) ([]entity.Payment, error) {
 	if offset < 0 {
 		return nil, ErrPaymentsListOffsetLimitError
 	}
@@ -167,7 +169,7 @@ func (s service) AllPaymentsList(ctx context.Context, offset, limit int64) ([]en
 	return lst, nil
 }
 
-func (s service) AccountsList(ctx context.Context, offset, limit int64) ([]entity.AccountName, error) {
+func (s Service) AccountsList(ctx context.Context, offset, limit int64) ([]entity.AccountName, error) {
 	a, err := entity.NewAccount()
 	if err != nil {
 		_ = s.logger.Log("service", "AccountsList", "func", "NewAccount()", "error", err)

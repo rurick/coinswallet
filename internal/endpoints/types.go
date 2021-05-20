@@ -12,7 +12,8 @@ type (
 	}
 	// CreateAccountRequest - holds the response values for the CreateAccount method
 	CreateAccountResponse struct {
-		Err error `json:"error,omitempty"`
+		ID  entity.AccountID `json:"account_id,omitempty"`
+		Err error            `json:"error,omitempty"`
 	}
 
 	//
@@ -23,7 +24,8 @@ type (
 	}
 	// DepositResponse - holds the response values for the Deposit method
 	DepositResponse struct {
-		Err error `json:"error,omitempty"`
+		Balance float64 `json:"balance,omitempty"`
+		Err     error   `json:"error,omitempty"`
 	}
 
 	//
@@ -35,7 +37,8 @@ type (
 	}
 	// TransferResponse - holds the response values for the Transfer method
 	TransferResponse struct {
-		Err error `json:"error,omitempty"`
+		ID  entity.ID `json:"payment_id,omitempty"`
+		Err error     `json:"error,omitempty"`
 	}
 
 	//
@@ -62,6 +65,7 @@ type (
 		List []entity.Payment `json:"list"`
 		Err  error            `json:"error,omitempty"`
 	}
+
 	//
 	// AccountsListRequest - holds the request params for the AccountsList method
 	AccountsListRequest struct {

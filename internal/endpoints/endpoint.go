@@ -3,7 +3,7 @@ package endpoints
 import (
 	"context"
 
-	"coinswallet/internal/service"
+	"coinswallet/internal/services"
 	"github.com/go-kit/kit/endpoint"
 )
 
@@ -17,7 +17,7 @@ type Endpoints struct {
 }
 
 // Endpoints holds all Go kit endpoints for the wallet service.
-func MakeEndpoints(s service.Service) Endpoints {
+func MakeEndpoints(s services.Service) Endpoints {
 	return Endpoints{
 		CreateAccount:   makeCreateAccountEndpoint(s),
 		Deposit:         makeDepositEndpoint(s),
@@ -32,42 +32,47 @@ func MakeEndpoints(s service.Service) Endpoints {
 // MakeEndpoints initializes all Go kit endpoints for the wallet service.
 //
 
-func makeCreateAccountEndpoint(s service.Service) endpoint.Endpoint {
+func makeCreateAccountEndpoint(s services.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(CreateAccountRequest)
-		err := s.CreateAccount(ctx, req.Name)
-		return CreateAccountResponse{Err: err}, nil
+		id, err := s.CreateAccount(ctx, req.Name)
+		return CreateAccountResponse{ID: id, Err: err}, nil
 	}
 }
-func makeDepositEndpoint(s service.Service) endpoint.Endpoint {
+
+func makeDepositEndpoint(s services.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(DepositRequest)
-		err := s.Deposit(ctx, req.Name, req.Amount)
-		return DepositResponse{Err: err}, nil
+		a, err := s.Deposit(ctx, req.Name, req.Amount)
+		return DepositResponse{Balance: a, Err: err}, nil
 	}
 }
-func makeTransferEndpoint(s service.Service) endpoint.Endpoint {
+
+func makeTransferEndpoint(s services.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(TransferRequest)
-		err := s.Transfer(ctx, req.From, req.To, req.Amount)
-		return TransferResponse{Err: err}, nil
+		id, err := s.Transfer(ctx, req.From, req.To, req.Amount)
+		return TransferResponse{ID: id, Err: err}, nil
 	}
 }
-func makePaymentsListEndpoint(s service.Service) endpoint.Endpoint {
+
+func makePaymentsListEndpoint(s services.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(PaymentsListRequest)
 		lst, err := s.PaymentsList(ctx, req.Name, req.Offset, req.Limit)
 		return PaymentsListResponse{List: lst, Err: err}, nil
 	}
 }
-func makeAllPaymentsListEndpoint(s service.Service) endpoint.Endpoint {
+
+func makeAllPaymentsListEndpoint(s services.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(AllPaymentsListRequest)
 		lst, err := s.AllPaymentsList(ctx, req.Offset, req.Limit)
 		return AllPaymentsListResponse{List: lst, Err: err}, nil
 	}
 }
-func makeAccountsListEndpoint(s service.Service) endpoint.Endpoint {
+
+func makeAccountsListEndpoint(s services.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(AccountsListRequest)
 		lst, err := s.AccountsList(ctx, req.Offset, req.Limit)
