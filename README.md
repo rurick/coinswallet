@@ -1,4 +1,4 @@
-#Simple Coins Wallet
+# Simple Coins Wallet
 
 It's a simple project provide generic wallet service with a REST API
 Using domain driven design
