@@ -85,5 +85,14 @@ func Test_Transfer(t *testing.T) {
 			t.Error(err)
 		}
 	})
-
+	t.Run("run service ", func(t *testing.T) {
+		if err := srv.Deposit(context.Background(), validAccName, 2); err != nil {
+			t.Error(err)
+		}
+	})
+	t.Run("delete temp account", func(t *testing.T) {
+		if err := a.Delete(); err != nil {
+			t.Error(err)
+		}
+	})
 }
