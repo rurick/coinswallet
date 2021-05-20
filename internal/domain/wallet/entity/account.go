@@ -109,16 +109,23 @@ func (a *Account) Deposit(amount float64) (paymentID int64, err error) {
 // Wallets listed ordering by id
 // offset and limit are using for set slice bound of list
 // if limit = -1, then no limit
-func (a *Account) List(offset, limit int64) ([]AccountName, error) {
+func (a *Account) List(offset, limit int64) ([]Account, error) {
 	lst, err := a.rep.List(offset, limit)
 	if err != nil {
 		return nil, err
 	}
 
 	// Convert result type
-	var res []AccountName
-	for _, n := range lst {
-		res = append(res, AccountName(n))
+	var res []Account
+	for _, id := range lst {
+		a, err := NewAccount()
+		if err != nil {
+			return nil, err
+		}
+		if err = a.Get(AccountID(id)); err != nil {
+			return nil, err
+		}
+		res = append(res, *a)
 	}
 	return res, nil
 }

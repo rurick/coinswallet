@@ -11,7 +11,7 @@ import (
 	"sync"
 )
 
-// Contains list of names of goroutines
+// Goroutines Contains list of names of goroutines
 type Goroutines struct {
 	sync.RWMutex
 	done chan bool
@@ -21,7 +21,7 @@ type Goroutines struct {
 	onceClose sync.Once
 }
 
-// initializing a new goroutines list
+// New initializing a new goroutines list
 func New() *Goroutines {
 	g := &Goroutines{}
 

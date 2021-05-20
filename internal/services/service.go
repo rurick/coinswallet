@@ -35,7 +35,7 @@ type Services interface {
 	// AccountsList - List of all registered accounts
 	// if set offset and limit > 0 returns slice
 	// if limit =-1 returns all accounts
-	AccountsList(ctx context.Context, offset, limit int64) ([]entity.AccountName, error)
+	AccountsList(ctx context.Context, offset, limit int64) ([]entity.Account, error)
 }
 
 type Service struct {
@@ -59,10 +59,11 @@ var (
 	ErrDepositNotFound    = errors.New("account not found")
 	ErrDepositAmountError = errors.New("error in amount value")
 
-	ErrTransferFromNotFound = errors.New("from account not found")
-	ErrTransferToNotFound   = errors.New("to account not found")
-	ErrTransferAmountError  = errors.New("error in amount value")
-	ErrTransferNoMoneyError = errors.New("no enough money")
+	ErrTransferFromNotFound    = errors.New("from account not found")
+	ErrTransferToNotFound      = errors.New("to account not found")
+	ErrTransferAmountError     = errors.New("error in amount value")
+	ErrTransferNoMoneyError    = errors.New("no enough money")
+	ErrTransferSelfToSelfError = errors.New("disable transfer to self account")
 
 	ErrPaymentsListNotFound         = errors.New("account not found")
 	ErrPaymentsListOffsetLimitError = errors.New("error in offset, limit params")
@@ -70,24 +71,24 @@ var (
 	ErrAccountsListOffsetLimitError = errors.New("error in offset, limit params")
 )
 
-func (s Service) CreateAccount(ctx context.Context, name entity.AccountName) (entity.AccountID, error) {
+func (s Service) CreateAccount(ctx context.Context, name entity.AccountName) (entity.AccountName, error) {
 	a, err := entity.NewAccount()
 	if err != nil {
 		_ = s.logger.Log("service", "CreateAccount", "func", "NewAccount()", "error", err)
-		return 0, ErrInService
+		return "", ErrInService
 	}
 	if err = a.Validate(name); err != nil {
 		_ = s.logger.Log("service", "CreateAccount", "func", "Validate()", "error", err)
-		return 0, ErrCreateAccountInvalidName
+		return "", ErrCreateAccountInvalidName
 	}
 	if err = a.Register(name); err != nil {
 		_ = s.logger.Log("service", "CreateAccount", "func", "Register()", "error", err)
 		if a.Find(name) != err { // duplicate
-			return 0, ErrCreateAccountDuplicate
+			return "", ErrCreateAccountDuplicate
 		}
-		return 0, ErrCreateAccount
+		return "", ErrCreateAccount
 	}
-	return a.ID, nil
+	return a.Name, nil
 }
 
 func (s Service) Deposit(ctx context.Context, name entity.AccountName, amount float64) (float64, error) {
@@ -111,38 +112,45 @@ func (s Service) Deposit(ctx context.Context, name entity.AccountName, amount fl
 
 }
 
-func (s Service) Transfer(ctx context.Context, from entity.AccountName, to entity.AccountName, amount float64) (entity.ID, error) {
+func (s Service) Transfer(ctx context.Context, from entity.AccountName, to entity.AccountName, amount float64) (*PaymentEntity, error) {
 	aFrom, err := entity.NewAccount()
 	aTo, _ := entity.NewAccount()
 	if err != nil {
 		_ = s.logger.Log("service", "Transfer", "func", "NewAccount()", "error", err)
-		return 0, ErrInService
+		return nil, ErrInService
+	}
+	if from == to {
+		return nil, ErrTransferSelfToSelfError
 	}
 	if err = aFrom.Find(from); err != nil {
 		_ = s.logger.Log("service", "Transfer", "func", "Find()", "error", err)
-		return 0, ErrTransferFromNotFound
+		return nil, ErrTransferFromNotFound
 	}
 	if err = aTo.Find(to); err != nil {
 		_ = s.logger.Log("service", "Transfer", "func", "Find()", "error", err)
-		return 0, ErrTransferToNotFound
+		return nil, ErrTransferToNotFound
 	}
 	if amount <= 0 {
-		return 0, ErrTransferAmountError
+		return nil, ErrTransferAmountError
 	}
 
 	if aFrom.Balance < amount {
-		return 0, ErrTransferNoMoneyError
+		return nil, ErrTransferNoMoneyError
 	}
 
-	var txID int64
-	if txID, err = aFrom.Transfer(to, amount); err != nil {
+	if _, err = aFrom.Transfer(to, amount); err != nil {
 		_ = s.logger.Log("service", "Transfer", "func", "Transfer()", "error", err)
-		return 0, ErrInService
+		return nil, ErrInService
 	}
-	return entity.ID(txID), nil
+	return &PaymentEntity{
+		Account:   aFrom.Name,
+		ToAccount: aTo.Name,
+		Amount:    amount,
+		Direction: PaymentDirectionOutgoing,
+	}, nil
 }
 
-func (s Service) PaymentsList(ctx context.Context, name entity.AccountName, offset, limit int64) ([]entity.Payment, error) {
+func (s Service) PaymentsList(ctx context.Context, name entity.AccountName, offset, limit int64) ([]PaymentEntity, error) {
 	a, err := entity.NewAccount()
 	if err != nil {
 		_ = s.logger.Log("service", "PaymentsList", "func", "NewAccount()", "error", err)
@@ -162,10 +170,10 @@ func (s Service) PaymentsList(ctx context.Context, name entity.AccountName, offs
 		return nil, ErrInService
 	}
 
-	return lst, nil
+	return convertPaymentDomainEntityToServiceEntity(lst, a)
 }
 
-func (s Service) AllPaymentsList(ctx context.Context, offset, limit int64) ([]entity.Payment, error) {
+func (s Service) AllPaymentsList(ctx context.Context, offset, limit int64) ([]PaymentEntity, error) {
 	if offset < 0 {
 		return nil, ErrPaymentsListOffsetLimitError
 	}
@@ -176,10 +184,10 @@ func (s Service) AllPaymentsList(ctx context.Context, offset, limit int64) ([]en
 		return nil, ErrInService
 	}
 
-	return lst, nil
+	return convertPaymentDomainEntityToServiceEntity(lst, nil)
 }
 
-func (s Service) AccountsList(ctx context.Context, offset, limit int64) ([]entity.AccountName, error) {
+func (s Service) AccountsList(ctx context.Context, offset, limit int64) ([]AccountEntity, error) {
 	a, err := entity.NewAccount()
 	if err != nil {
 		_ = s.logger.Log("service", "AccountsList", "func", "NewAccount()", "error", err)
@@ -196,5 +204,77 @@ func (s Service) AccountsList(ctx context.Context, offset, limit int64) ([]entit
 		return nil, ErrInService
 	}
 
-	return lst, nil
+	return convertAccountDomainEntityToServiceEntity(lst)
+}
+
+// convert response
+func convertAccountDomainEntityToServiceEntity(lst []entity.Account) ([]AccountEntity, error) {
+	var res []AccountEntity
+	for _, a := range lst {
+		res = append(res, AccountEntity{
+			Id:       a.Name,
+			Balance:  a.Balance,
+			Currency: a.Currency,
+		})
+	}
+	return res, nil
+}
+
+// convert response
+func convertPaymentDomainEntityToServiceEntity(lst []entity.Payment, a *entity.Account) ([]PaymentEntity, error) {
+	var res []PaymentEntity
+	for _, p := range lst {
+		// for each payment
+		toAccount, err := entity.NewAccount()
+		if err != nil {
+			return nil, err
+		}
+		if err = toAccount.Get(entity.AccountID(p.ToID)); err != nil {
+			toAccount = nil
+		}
+
+		fromAccount, err := entity.NewAccount()
+		if err != nil {
+			return nil, err
+		}
+		if err = fromAccount.Get(entity.AccountID(p.FromID)); err != nil {
+			fromAccount = nil
+		}
+
+		to := entity.AccountName("")
+		if toAccount != nil {
+			to = toAccount.Name
+		}
+		from := entity.AccountName("")
+		if fromAccount != nil {
+			from = fromAccount.Name
+		}
+		if a != nil {
+			// if defined account for witch getting payments, else all payments will be "outgoing"
+
+			// define direction
+			direction := PaymentDirectionOutgoing
+			if entity.AccountID(p.FromID) != a.ID {
+				from, to = to, from
+				direction = PaymentDirectionIncoming
+			}
+
+			res = append(res, PaymentEntity{
+				Account:   from,
+				ToAccount: to,
+				Amount:    p.Amount,
+				Direction: direction,
+			})
+		} else {
+
+			// all payments will be "outgoing"
+			res = append(res, PaymentEntity{
+				Account:   from,
+				ToAccount: to,
+				Amount:    p.Amount,
+				Direction: PaymentDirectionOutgoing,
+			})
+		}
+	}
+	return res, nil
 }

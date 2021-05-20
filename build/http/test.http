@@ -1,0 +1,99 @@
+POST http://localhost:8081/account/
+content-type: application/json
+
+{
+  "name": "wallet1"
+}
+
+###
+
+POST http://localhost:8081/account/
+content-type: application/json
+
+{
+  "name": "wallet2"
+}
+
+###
+
+POST http://localhost:8081/account/
+content-type: application/json
+
+{
+  "name": "wallet3"
+}
+
+###
+
+PATCH http://localhost:8081/account/deposit/
+content-type: application/json
+
+{
+  "name": "wallet1",
+  "amount":31.2314511
+}
+
+###
+
+PATCH http://localhost:8081/account/deposit/
+content-type: application/json
+
+{
+  "name": "wallet3",
+  "amount":3.23
+}
+
+###
+
+PATCH http://localhost:8081/account/deposit/
+content-type: application/json
+
+{
+  "name": "wallet1",
+  "amount":-2
+}
+###
+
+PATCH http://localhost:8081/account/transfer/
+content-type: application/json
+
+{
+  "from": "wallet1",
+  "to": "wallet2",
+  "amount":2
+}
+
+###
+PATCH http://localhost:8081/account/transfer/
+content-type: application/json
+
+{
+  "from": "wallet2",
+  "to": "wallet3",
+  "amount":1
+}
+
+###
+PATCH http://localhost:8081/account/transfer/
+content-type: application/json
+
+{
+  "from": "wallet2",
+  "to": "wallet2",
+  "amount":1
+}
+
+###
+
+GET http://localhost:8081/accounts/0/-1/
+content-type: application/json
+
+###
+
+GET http://localhost:8081/payments/0/-1/
+content-type: application/json
+
+###
+
+GET http://localhost:8081/payments/wallet2/0/-1/
+content-type: application/json

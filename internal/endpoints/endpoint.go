@@ -51,8 +51,8 @@ func makeDepositEndpoint(s services.Service) endpoint.Endpoint {
 func makeTransferEndpoint(s services.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(TransferRequest)
-		id, err := s.Transfer(ctx, req.From, req.To, req.Amount)
-		return TransferResponse{ID: id, Err: err}, nil
+		p, err := s.Transfer(ctx, req.From, req.To, req.Amount)
+		return TransferResponse{Payment: p, Err: err}, nil
 	}
 }
 
@@ -68,6 +68,7 @@ func makeAllPaymentsListEndpoint(s services.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(AllPaymentsListRequest)
 		lst, err := s.AllPaymentsList(ctx, req.Offset, req.Limit)
+
 		return AllPaymentsListResponse{List: lst, Err: err}, nil
 	}
 }

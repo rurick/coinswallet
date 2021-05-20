@@ -1,6 +1,6 @@
 // repository implement interfaces for access to database layer
-//
-// this model can used different driver of database
+
+// Package repository can used different driver of database
 // for each of a database need to define its implementation in driver
 package repository
 
@@ -10,7 +10,7 @@ import (
 	"coinswallet/internal/domain/wallet/repository/driver"
 )
 
-// interface defined account repository for storage
+// Account interface defined account repository for storage
 type Account interface {
 	// ID return id of wallet account
 	ID() int64
@@ -37,7 +37,7 @@ type Account interface {
 	Deposit(amount float64) (int64, error)
 
 	// List - return list of all wallets account names
-	List(offset, limit int64) ([]string, error)
+	List(offset, limit int64) ([]int64, error)
 }
 
 //

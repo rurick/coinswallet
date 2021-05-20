@@ -1,14 +1,16 @@
 package driver
 
-import "fmt"
+import (
+	"fmt"
+)
 
 const (
 	defaultCurrency = "usd"
 )
 
 //
-// Driver for work with PostgreSQL database
-//
+// Driver for accounts for work with PostgreSQL database
+
 type PgSqlAccount struct {
 	id       int64
 	name     string
@@ -95,7 +97,7 @@ func (pg *PgSqlAccount) Deposit(amount float64) (int64, error) {
 		return 0, err
 	}
 
-	_ = pg.Get(pg.id) //reread from db
+	_ = pg.Get(pg.id) // reread from db
 
 	return paymentID, nil
 }
@@ -165,7 +167,7 @@ func (pg *PgSqlAccount) Transfer(toID int64, amount float64) (int64, error) {
 		return 0, err
 	}
 
-	_ = pg.Get(pg.id) //reread from db
+	_ = pg.Get(pg.id) // reread from db
 
 	return paymentID, nil
 }
@@ -206,8 +208,8 @@ func (pg *PgSqlAccount) Delete() error {
 // offset and limit are using for set slice bound of list
 // if limit = -1, then no limit
 // Important! When any fields will be added into table, then need to add one in to SELECT query
-func (pg *PgSqlAccount) List(offset, limit int64) ([]string, error) {
-	sql := `SELECT name FROM accounts ORDER BY id OFFSET $1`
+func (pg *PgSqlAccount) List(offset, limit int64) ([]int64, error) {
+	sql := `SELECT id FROM accounts ORDER BY id OFFSET $1`
 	if limit >= 0 {
 		sql += fmt.Sprintf(` LIMIT %d`, limit)
 	}
@@ -218,14 +220,14 @@ func (pg *PgSqlAccount) List(offset, limit int64) ([]string, error) {
 	defer rows.Close()
 
 	var (
-		res []string
-		s   string
+		res []int64
+		id  int64
 	)
 	for rows.Next() {
-		if err := rows.Scan(&s); err != nil {
+		if err := rows.Scan(&id); err != nil {
 			return nil, err
 		}
-		res = append(res, s)
+		res = append(res, id)
 	}
 	return res, nil
 }

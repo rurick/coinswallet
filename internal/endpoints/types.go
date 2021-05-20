@@ -10,10 +10,10 @@ type CreateAccountRequest struct {
 	Name entity.AccountName
 }
 
-// CreateAccountRequest - holds the response values for the CreateAccount method
+// CreateAccountResponse - holds the response values for the CreateAccount method
 type CreateAccountResponse struct {
-	ID  entity.AccountID `json:"account_id,omitempty"`
-	Err error            `json:"error,omitempty"`
+	ID  entity.AccountName `json:"account_id,omitempty"`
+	Err error              `json:"error,omitempty"`
 }
 
 func (r CreateAccountResponse) Error() error { return r.Err }
@@ -43,8 +43,8 @@ type TransferRequest struct {
 
 // TransferResponse - holds the response values for the Transfer method
 type TransferResponse struct {
-	ID  entity.ID `json:"payment_id,omitempty"`
-	Err error     `json:"error,omitempty"`
+	Payment interface{} `json:"payment,omitempty"`
+	Err     error       `json:"error,omitempty"`
 }
 
 func (r TransferResponse) Error() error { return r.Err }
@@ -59,23 +59,23 @@ type PaymentsListRequest struct {
 
 // PaymentsListResponse - holds the response values for the PaymentsList method
 type PaymentsListResponse struct {
-	List []entity.Payment `json:"list"`
-	Err  error            `json:"error,omitempty"`
+	List interface{} `json:"list"`
+	Err  error       `json:"error,omitempty"`
 }
 
 func (r PaymentsListResponse) Error() error { return r.Err }
 
 //
-// PaymentsListRequest - holds the request params for the AllPaymentsList method
+// AllPaymentsListRequest  - holds the request params for the AllPaymentsList method
 type AllPaymentsListRequest struct {
 	Offset int64
 	Limit  int64
 }
 
-// PaymentsListResponse - holds the response values for the AllPaymentsList method
+// AllPaymentsListResponse PaymentsListResponse - holds the response values for the AllPaymentsList method
 type AllPaymentsListResponse struct {
-	List []entity.Payment `json:"list"`
-	Err  error            `json:"error,omitempty"`
+	List interface{} `json:"list"`
+	Err  error       `json:"error,omitempty"`
 }
 
 func (r AllPaymentsListResponse) Error() error { return r.Err }
@@ -89,8 +89,8 @@ type AccountsListRequest struct {
 
 // AccountsListResponse - holds the response values for the AccountsList method
 type AccountsListResponse struct {
-	List []entity.AccountName `json:"list"`
-	Err  error                `json:"error,omitempty"`
+	List interface{} `json:"list"`
+	Err  error       `json:"error,omitempty"`
 }
 
 func (r AccountsListResponse) Error() error { return r.Err }

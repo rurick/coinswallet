@@ -145,7 +145,7 @@ func Test_PaymentsList(t *testing.T) {
 		}
 	})
 	t.Run("run service ", func(t *testing.T) {
-		var lst []entity.Payment
+		var lst []PaymentEntity
 		if lst, err = srv.PaymentsList(context.Background(), validAccName, 0, -1); err != nil {
 			t.Error(err)
 		}

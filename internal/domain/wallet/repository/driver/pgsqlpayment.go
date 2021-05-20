@@ -6,8 +6,8 @@ import (
 )
 
 //
-// Driver for work with PostgreSQL database
-//
+// Driver for payments for work with PostgreSQL database
+
 type PgSqlPayment struct {
 	id     int64
 	date   time.Time

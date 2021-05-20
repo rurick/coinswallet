@@ -20,7 +20,10 @@ func Test_List(t *testing.T) {
 		}
 	})
 	t.Run("get account payments", func(t *testing.T) {
-		ac, _ := NewAccount()
+		ac, err := NewAccount()
+		if err != nil {
+			t.Fatal(err)
+		}
 		_ = ac.Register("random_76ck76wecoan0vl12")
 		_, _ = ac.Deposit(1)
 		lst, err = PaymentsList(ac, 0, -1)
