@@ -1,11 +1,19 @@
+// Copyright 2021 (c) Yuriy Iovkov aka Rurick.
+// yuriyiovkov@gmail.com; telegram: @yuriyiovkov
+
+// Important!
+// for successfully test passed run it from directory where file .env is
+// or set up the ENV in your OS environment
+
 package service
 
 import (
-	"coinswallet/internal/domain/wallet/entity"
 	"context"
-	"github.com/go-kit/kit/log"
 	"os"
 	"testing"
+
+	"coinswallet/internal/domain/wallet/entity"
+	"github.com/go-kit/kit/log"
 )
 
 var logger log.Logger
@@ -57,7 +65,7 @@ func Test_Deposit(t *testing.T) {
 		}
 	})
 	t.Run("run service ", func(t *testing.T) {
-		if err := srv.Deposit(context.Background(), validAccName, 2); err != nil {
+		if err := srv.Deposit(context.Background(), validAccName, 3); err != nil {
 			t.Error(err)
 		}
 	})
@@ -80,18 +88,98 @@ func Test_Transfer(t *testing.T) {
 	a2, err := entity.NewAccount()
 	srv := newService(logger)
 
-	t.Run("create temp account", func(t *testing.T) {
+	t.Run("create temp account 1", func(t *testing.T) {
 		if err := a1.Register(validAccName1); err != nil {
 			t.Error(err)
 		}
 	})
-	t.Run("run service ", func(t *testing.T) {
-		if err := srv.Deposit(context.Background(), validAccName, 2); err != nil {
+	t.Run("create temp account 2", func(t *testing.T) {
+		if err := a2.Register(validAccName2); err != nil {
 			t.Error(err)
 		}
 	})
+	t.Run("deposit ", func(t *testing.T) {
+		if err := srv.Deposit(context.Background(), validAccName1, 2); err != nil {
+			t.Error(err)
+		}
+	})
+	t.Run("run service ", func(t *testing.T) {
+		if err := srv.Transfer(context.Background(), validAccName1, validAccName2, 1); err != nil {
+			t.Error(err)
+		}
+		_ = a1.Find(validAccName1)
+		_ = a2.Find(validAccName2)
+		if a1.Balance != a2.Balance && a2.Balance != 1 {
+			t.Errorf("balanse must be 1 and 1, have: %f, %f", a1.Balance, a2.Balance)
+		}
+	})
+
+	t.Run("delete temp accounts", func(t *testing.T) {
+		if err := a1.Delete(); err != nil {
+			t.Error(err)
+		}
+		if err := a2.Delete(); err != nil {
+			t.Error(err)
+		}
+	})
+}
+
+func Test_PaymentsList(t *testing.T) {
+	const validAccName = "Testing987ha9871hgaf92c8782"
+	initLogger()
+
+	a, err := entity.NewAccount()
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv := newService(logger)
+
+	t.Run("create temp account", func(t *testing.T) {
+		if err := a.Register(validAccName); err != nil {
+			t.Error(err)
+		}
+	})
+	t.Run("deposit ", func(t *testing.T) {
+		if err := srv.Deposit(context.Background(), validAccName, 6); err != nil {
+			t.Error(err)
+		}
+	})
+	t.Run("run service ", func(t *testing.T) {
+		var lst []entity.Payment
+		if lst, err = srv.PaymentsList(context.Background(), validAccName, 0, -1); err != nil {
+			t.Error(err)
+		}
+		if len(lst) != 1 {
+			t.Errorf("list length must be 1, got: %d", len(lst))
+		}
+	})
+
 	t.Run("delete temp account", func(t *testing.T) {
 		if err := a.Delete(); err != nil {
+			t.Error(err)
+		}
+	})
+}
+
+func Test_AllPaymentsList(t *testing.T) {
+	initLogger()
+
+	srv := newService(logger)
+
+	t.Run("run service ", func(t *testing.T) {
+		if _, err := srv.AllPaymentsList(context.Background(), 0, -1); err != nil {
+			t.Error(err)
+		}
+	})
+}
+
+func Test_AccountsList(t *testing.T) {
+	initLogger()
+
+	srv := newService(logger)
+
+	t.Run("run service ", func(t *testing.T) {
+		if _, err := srv.AccountsList(context.Background(), 0, -1); err != nil {
 			t.Error(err)
 		}
 	})

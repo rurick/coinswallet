@@ -63,7 +63,11 @@ type configuration struct {
 // return configuration for database connection
 func getConfiguration() configuration {
 	if err := godotenv.Load(); err != nil {
-		logger.Warning("[Wallet][getConfiguration]", err)
+		wd, _ := os.Getwd()
+		logger.WithFields(logger.Fields{
+			"[Wallet][getConfiguration]": err,
+			"workdir":                    wd,
+		}).Warning()
 	}
 
 	// cacheExpTime
@@ -84,6 +88,7 @@ func getConfiguration() configuration {
 		DBPass:       os.Getenv("PGSQL_PASS"),
 		CacheExpTime: time.Duration(cET) * time.Minute,
 	}
+	logger.Debug(c)
 	return c
 }
 
