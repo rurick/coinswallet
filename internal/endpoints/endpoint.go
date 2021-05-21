@@ -3,8 +3,8 @@ package endpoints
 import (
 	"context"
 
-	"coinswallet/internal/services"
 	"github.com/go-kit/kit/endpoint"
+	"github.com/rurick/coinswallet/internal/services"
 )
 
 type Endpoints struct {

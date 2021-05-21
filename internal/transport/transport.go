@@ -7,13 +7,13 @@ import (
 	"net/http"
 	"strconv"
 
-	"coinswallet/internal/domain/wallet/entity"
-	"coinswallet/internal/endpoints"
-	"coinswallet/internal/services"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/transport"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
+	"github.com/rurick/coinswallet/internal/domain/wallet/entity"
+	"github.com/rurick/coinswallet/internal/endpoints"
+	"github.com/rurick/coinswallet/internal/services"
 )
 
 var (

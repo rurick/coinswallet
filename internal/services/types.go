@@ -1,6 +1,6 @@
 package services
 
-import "coinswallet/internal/domain/wallet/entity"
+import "github.com/rurick/coinswallet/internal/domain/wallet/entity"
 
 const (
 	PaymentDirectionIncoming = "incoming"

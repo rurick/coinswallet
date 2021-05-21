@@ -1,4 +1,4 @@
-module coinswallet
+module github.com/rurick/coinswallet
 
 go 1.14
 

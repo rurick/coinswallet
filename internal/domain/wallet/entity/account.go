@@ -11,7 +11,7 @@ import (
 	"errors"
 	"regexp"
 
-	"coinswallet/internal/domain/wallet/repository"
+	"github.com/rurick/coinswallet/internal/domain/wallet/repository"
 )
 
 type (

@@ -28,9 +28,9 @@ import (
 	"sync"
 	"time"
 
-	memorycache "coinswallet/pkg/memcache"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/joho/godotenv"
+	memorycache "github.com/rurick/coinswallet/pkg/memcache"
 	logger "github.com/sirupsen/logrus"
 )
 

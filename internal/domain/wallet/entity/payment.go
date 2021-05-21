@@ -3,7 +3,7 @@ package entity
 import (
 	"time"
 
-	"coinswallet/internal/domain/wallet/repository"
+	"github.com/rurick/coinswallet/internal/domain/wallet/repository"
 )
 
 // ID identifier of payment. Integer value

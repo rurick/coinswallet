@@ -1,7 +1,7 @@
 package endpoints
 
 import (
-	"coinswallet/internal/domain/wallet/entity"
+	"github.com/rurick/coinswallet/internal/domain/wallet/entity"
 )
 
 //

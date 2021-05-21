@@ -6,19 +6,19 @@
 package main
 
 import (
-	"coinswallet/pkg/subprocmgr"
 	"context"
 	"flag"
 	"fmt"
+	"github.com/rurick/coinswallet/pkg/subprocmgr"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"coinswallet/internal/services"
-	"coinswallet/internal/transport"
 	"github.com/go-kit/kit/log"
+	"github.com/rurick/coinswallet/internal/services"
+	"github.com/rurick/coinswallet/internal/transport"
 )
 
 func main() {

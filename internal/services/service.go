@@ -7,8 +7,8 @@ import (
 	"context"
 	"errors"
 
-	"coinswallet/internal/domain/wallet/entity"
 	"github.com/go-kit/kit/log"
+	"github.com/rurick/coinswallet/internal/domain/wallet/entity"
 )
 
 type Services interface {

@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"time"
 
-	"coinswallet/internal/domain/wallet/repository/driver"
+	"github.com/rurick/coinswallet/internal/domain/wallet/repository/driver"
 )
 
 // interface defined payment repository for storage

@@ -7,7 +7,7 @@ package repository
 import (
 	"fmt"
 
-	"coinswallet/internal/domain/wallet/repository/driver"
+	"github.com/rurick/coinswallet/internal/domain/wallet/repository/driver"
 )
 
 // Account interface defined account repository for storage
