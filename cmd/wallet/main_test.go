@@ -4,10 +4,10 @@
 package main
 
 import (
-	"coinswallet/internal/domain/wallet/entity"
 	"encoding/json"
 	"fmt"
 	"github.com/go-resty/resty/v2"
+	"github.com/rurick/coinswallet/internal/domain/wallet/entity"
 	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"testing"

@@ -8,7 +8,7 @@ ADD . /go/src/github.com/rurick/coinswallet
 # Build the coinswallet command inside the container.
 # (You may fetch or manage dependencies here,
 # either manually or with a tool like "godep".)
-RUN go install github.com/rurick/coinswallet/cmd/wallet
+RUN go install github.com/rurick/coinswallet/cmd/wallet@latest
 
 # Run the coinswallet command by default when the container starts.
 ENTRYPOINT /go/bin/wallet

@@ -12,8 +12,8 @@ import (
 	"os"
 	"testing"
 
-	"coinswallet/internal/domain/wallet/entity"
 	"github.com/go-kit/kit/log"
+	"github.com/rurick/coinswallet/internal/domain/wallet/entity"
 )
 
 var logger log.Logger
