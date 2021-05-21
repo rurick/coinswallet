@@ -17,6 +17,21 @@
 * build/test_api.sh - Для запуска автоматических тестов api. Сами тесты находятся в cmd/wallet/main_test.go  
 * build/test.sh - Для запуска unit-тестов и интеграционных тестов
 
+## Конфигурация 
+Конфигурирование осуществляется через переменные окружения.
+
+Настраивается время жизни кэша и параметры соединения с СУБД:
+```shell
+# PostgreSQL connection
+PGSQL_HOST=127.0.0.1
+PGSQL_NAME=coins
+PGSQL_USER=coins
+PGSQL_PASS=coins
+PGSQL_PORT=5433
+# Memory cache settings (in minutes)
+CacheExpTime=10
+```
+
 ## Запуск приложения
 Для запуска приложения с использованием docker-compose: build/docker-compose.yml
 ```shell
