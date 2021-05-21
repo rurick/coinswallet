@@ -76,7 +76,7 @@ func (pg PgSqlPayment) List(accountID, offset, limit int64) ([]interface{}, erro
 		FROM payments
 		WHERE
 			"from" = $1 OR "to" = $1
-		ORDER BY id
+		ORDER BY id DESC
 		OFFSET $2`
 	if limit >= 0 {
 		sql += fmt.Sprintf(` LIMIT %d`, limit)
@@ -121,7 +121,7 @@ func (pg PgSqlPayment) ListAll(offset, limit int64) ([]interface{}, error) {
 	sql := `
 		SELECT id, "from", "to", amount, date
 		FROM payments
-		ORDER BY id
+		ORDER BY id DESC
 		OFFSET $1`
 	if limit >= 0 {
 		sql += fmt.Sprintf(` LIMIT %d`, limit)

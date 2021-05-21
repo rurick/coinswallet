@@ -13,7 +13,7 @@ import (
 
 type Services interface {
 
-	// CreateAccount -  create new wallet account
+	// CreateAccount -  create new wallet account with name
 	CreateAccount(ctx context.Context, name entity.AccountName) error
 
 	// Deposit - deposit amount of currency to the wallet account.

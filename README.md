@@ -9,3 +9,5 @@ User Stories:
 * I want to send from one account to another
 * I want to be able to see all payments
 * I want to be able to see available accounts
+
+`See docs directory for more documentation`
