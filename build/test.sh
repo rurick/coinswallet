@@ -1,4 +1,5 @@
 #!/bin/sh
+#run autotest
 MY_FN=`readlink -e $0`
 ROOT_DIR=`dirname $MY_FN`/..
 
