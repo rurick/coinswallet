@@ -60,7 +60,7 @@ content-type: application/json
 {
   "from": "wallet1",
   "to": "wallet2",
-  "amount":2
+  "amount":0
 }
 
 ###

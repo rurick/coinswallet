@@ -218,6 +218,8 @@ func codeFrom(err error) int {
 		services.ErrCreateAccount,
 		services.ErrDepositAmountError,
 		services.ErrTransferAmountError,
+		services.ErrTransferSelfToSelfError,
+		services.ErrTransferNoMoneyError,
 		services.ErrPaymentsListOffsetLimitError,
 		services.ErrAccountsListOffsetLimitError:
 
