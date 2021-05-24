@@ -10,12 +10,14 @@
 ### /build/
 * /build/http/ - здесь находятся файлы с http запросами для ручного тестирования
 * docker-compose.yml - запуск микросервиса (вместе с субд)
-* test.sh - запуск unit-тестов и интеграционных тестов
+* pgdocker_up.sh - запуск субд postgres в докере
+* pgdocker_down.sh - остановка субд postgres в докере
+* test.sh - запуск unit-тестов и интеграционных тестов (необходим запуск СУБД)
 * test_api.sh - запуск автоматического тестирования api
 
 ## Тестирование
-* build/test_api.sh - Для запуска автоматических тестов api. Сценарии теста находятся в cmd/wallet/main_test.go  
-* build/test.sh - Для запуска unit-тестов и интеграционных тестов
+* sudo build/test_api.sh - Для запуска автоматических тестов api. Сценарии теста находятся в cmd/wallet/main_test.go  
+* sudo build/test.sh - Для запуска unit-тестов и интеграционных тестов
 
 ## Конфигурация 
 Конфигурирование осуществляется через переменные окружения.
@@ -36,7 +38,7 @@ CacheExpTime=10
 Для запуска приложения с использованием docker-compose: build/docker-compose.yml
 ```shell
 cd build/
-docker-compose up -d
+sudo docker-compose up -d
 ```
 
 `После запуска приложения можно воспользоваться ручным тестирование выполняя запросы из build/http/test.http`

@@ -12,11 +12,8 @@ export CacheExpTime=10
 
 cd $ROOT_DIR/build
 
-docker-compose up -d
 
 go clean -testcache
 go test $ROOT_DIR/pkg/...
 go test $ROOT_DIR/internal/...
-
-docker-compose down
 
