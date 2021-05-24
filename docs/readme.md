@@ -18,13 +18,17 @@
 * test_api.sh - запуск автоматического тестирования api
 
 ## Тестирование
+Юнит- и интеграционные тесты:
 ```shell
 $ cd build
 $ sudo ./pgdocker_up.sh
 $ sudo ./pgdocker_init.sh
 $ ./test.sh
 $ sudo ./pgdocker_down.sh
+```
 
+Тестирование API через http запросы в пакетном режиме (cmd/wallet/main_test.go):
+```shell
 $ sudo docker-compose up -d
 $ ./test_api.sh
 $ sudo docker-compose down
