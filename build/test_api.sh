@@ -12,9 +12,5 @@ export CacheExpTime=10
 
 cd $ROOT_DIR/build
 
-docker-compose up -d
-
 go clean -testcache
 go test $ROOT_DIR/cmd/...
-
-docker-compose  down

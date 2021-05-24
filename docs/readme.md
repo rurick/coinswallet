@@ -12,14 +12,23 @@
 * init.sql - скрипт инициализации БД
 * docker-compose.yml - запуск микросервиса (вместе с субд)
 * pgdocker_up.sh - запуск субд postgres в докере
+* pgdocker_init.sh - инициализация БД
 * pgdocker_down.sh - остановка субд postgres в докере
-* test.sh - запуск unit-тестов и интеграционных тестов (необходим запуск СУБД)
+* test.sh - запуск unit-тестов и интеграционных тестов 
 * test_api.sh - запуск автоматического тестирования api
 
 ## Тестирование
-* sudo build/test_api.sh - Для запуска автоматических тестов api. Сценарии теста находятся в cmd/wallet/main_test.go  
-* sudo build/test.sh - Для запуска unit-тестов и интеграционных тестов (необходим запуск СУБД: pgdocker_up.sh)
+```shell
+$ cd build
+$ sudo ./pgdocker_up.sh
+$ sudo ./pgdocker_init.sh
+$ ./test.sh
+$ sudo ./pgdocker_down.sh
 
+$ sudo docker-compose up -d
+$ ./test_api.sh
+$ sudo docker-compose down
+```
 ## Конфигурация 
 Конфигурирование осуществляется через переменные окружения.
 
